@@ -40,10 +40,6 @@ class Adjective
       end
    end
 
-   def do(what, *args)
-      call(@events[what], args) if !@events[what].nil?
-   end
-
    def types
       self.class.class_eval do
          @types
@@ -76,8 +72,8 @@ module Adjectives
       class Hard < Adjective
          description "is hard"
 
-         upon "bash" do
-            puts "rings like a gong!"
+         def bash(basher)
+            puts "Rings like a gong!"
          end
       end
    end

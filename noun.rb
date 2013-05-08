@@ -42,7 +42,7 @@ class Noun
 
    def do(what, *args)
       @adjectives.each do |adj|
-         adj.do(what, args) 
+         adj.call(what, args) if (adj.respond_to? what)
       end
    end
 
