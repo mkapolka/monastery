@@ -1,79 +1,136 @@
-class Object
-   #Get the metaclass / eigenclass
-   def metaclass; class << self; self; end; end
-end
+################################################################################
+## A Treatise on Ontology ######################################################
+##  By Brother Buddy ###########################################################
+################################################################################
+# In this document I will propose an ontology to suit the needs of the         #
+# Monastery.                                                                   #
+#                                                                              #
+# A Noun is the fundamental unit of being. It is a thing. A Noun has many      #
+# Properties. These Properties are what give it meaning within the system of   #
+# the world- Properties are what cause a Noun to react to the world around it, #
+# and what allow it to act on the world.                                       #
+################################################################################
 
 class Noun
-   attr_accessor :adjectives, :name, :parent
-   attr_reader :responders
+	attr_accessor :properties, :name, :parent
 
-   class << self
-      attr_accessor :class_adjectives
-      class_adjectives = [];
-   end
+	#Every Noun has a name to help distinguish it from other things.
+	def name(string = nil)
+	 @name = string if string
+	 return @name
+	end
 
    def initialize
       @name = "#{self.class}"
-      @adjectives = {};
-      @responders = {};
-
-      self.class.class_adjectives.uniq.each do |c|
-         make(c);
-      end
+      @properties = {};
    end
 
-   def add_responder(event, responder)
-      @responders[event] ||= [];
-      @responders[event] << responder;
-   end
+	 def inspect
+		return self.name
+	 end
 
-   def remove_responder(event, &block)
-      @responders[event].splice(responder)
-   end
-   
-   def call_responders(event, *args)
-      return if @responders[event].nil?
-      @responders[event].each do |adj|
-         puts adj
-         puts adj.events
-         adj.call(adj.events[event],args) if not adj.events.nil?
-      end
-   end
-
+	 #Nouns can have things done to them, but their reaction to those events will
+	 # be determined the properties of the noun.
    def do(what, *args)
-      @adjectives.each do |adj|
-         adj.call(what, args) if (adj.respond_to? what)
+      @properties.each_pair do |key, prop|
+				 what = what.to_sym;
+				 next if prop.events.nil?
+				 prop.events[what].call(*args) if not prop.events[what].nil?;
       end
    end
 
-   def make(adjective)
-      adj_class = Adjectives.const_get(adjective.capitalize) if adjective.class == Symbol;
-      unless adjectives[adjective].nil?
-         adjectives[adjective].count += 1 
-      else 
-         a = adjectives[adjective] = adj_class.new
-         a.noun = self;
+	 #The Properties of an object are constantly in flux. They may be made or
+	 # unmade at any time, according to the situation of the object.
+   def make(*new_props)
+			new_props.each do |property|
+				begin
+					prop_class = Properties.const_get(property.capitalize)
+				rescue
+					puts "Invalid property name: #{property.to_s}";
+					next;
+				end
 
-         metaclass.instance_eval do 
-            define_method(adjective.downcase) do
-               adjectives[adjective]
-            end
+				unless properties[property].nil?
+					 properties[property].count += 1 
+				else 
+					 a = properties[property] = prop_class.new
+					 a.do(:make, self);
+					 a.noun = self;
+					 a.count = 1;
 
-            define_method(adjective.downcase.to_s + "?") do
-               !adjectives[adjective].nil?
-            end
-         end
-      end
+					 prop_accessor property
+				end
+			end
    end
+	 alias :is :make;
    alias :becomes :make
 
-   def adjectives_of_type(type)
-      return adjectives.each_pair.map do |key, value|
+	 def say(text, channel)
+			puts text;
+	 end
+
+	 def unmake(*props)
+		props.each do |prop|
+			begin
+				prop_class = Properties.const_get(prop.capitalize);
+			rescue
+				puts "Invalid property name: #{prop.to_s}"
+				next;
+			end
+
+			prop = prop.downcase;
+			unless properties[prop].nil?
+				properties[prop].count -= 1;
+				if (properties[prop].count <= 0)
+					properties[prop].do(:unmake, self);
+					properties.delete prop;
+				end
+			else
+				puts "#{self.name} wasn't #{prop} to begin with.";
+			end
+		end
+	 end
+
+	 #We can test whether a Noun exemplifies a certain property in this manner:
+	 # "noun.property?" where 'property' is the name of the property. For example,
+	 # if we want to test whether a bear is fuzzy, we might call bear.fuzzy? The 
+	 # answer to this question will reveal whether or not the bear is fuzzy. We can
+	 # also access the object pertaining to that particular property with the 
+	 # phrase "noun.property". For instance, if we want to feed our bear by adding
+	 # a mouse to the belly of a bear, we might call bear.container << mouse. Both
+	 # of these terms, "noun.property?" and "noun.property" are set up with the
+	 # method prop_accessor. The first argument of prop_accessor is the word we will
+	 # use to access the property we want, and the second term is the property's own
+	 # name. If we only specify one argument we assume that we want the same word
+	 # to be used for both. I.e. "bear.prop_accessor :fuzzy" will create the methods
+	 # bear.fuzzy and bear.fuzzy?, whereas "bear.prop_acessor :fuzzy :wuzzy" will
+	 # create the methods "bear.fuzzy" and "bear.fuzzy?", but they will poll the
+	 # bear's "wuzzy" property.
+	 def prop_accessor(name, prop_name = nil)
+			prop_name ||= name;
+			metaclass.instance_eval do
+				define_method(name.downcase) do
+					properties[prop_name]
+				end
+
+				define_method(name.downcase.to_s + "?") do
+					!properties[prop_name].nil?
+				end
+			end
+	 end
+
+	 #Sometimes it is helpful to get all the properties of a Noun that share
+	 # a certain type. 
+   def properties_of_type(type)
+      return properties.each_pair.map do |key, value|
          #!value.types.index(type).nil? 
          value if !value.types.index(type).nil?
       end
    end
 
+	 #When a method doesn't exist this one is called instead, which allows us to
+	 # check for the existence of a property with the "noun.property?" syntax
+	 # even if that property isn't present in the object.
    def method_missing(method, *args)
       puts "Mizzing"
       return false if (method[-1] == "?")
@@ -81,29 +138,15 @@ class Noun
    end
 
    def describe
-      "The #{name}" + adjectives.values.reduce(""){ |p,x| p + " " + x.describe + " and" }[0...-4] + "."
+      "#{name}" + properties.values.reduce(""){ |p,x| p + " " + x.describe + " and" }[0...-4] + "."
    end
 
-   def is?(adjective)
-      not adjectives[adjective.downcase.to_sym].nil?;
+   def is?(property)
+      not properties[property.downcase.to_sym].nil?;
    end
 
-   def self.is(*adjectives)
-      adjectives.each do |adj|
-         if (not Adjectives.const_defined?(adj.capitalize))
-            puts "Unrecognized adjective '#{adj}' in #{self} definition.";
-         else
-            self.class_adjectives ||= [];
-            self.class_adjectives.push(adj);
-         end
-      end
-   end
-end
-
-class Bear < Noun
-   is :fuzzy
-end
-
-class Tea_Kettle < Noun
-   is :container, :hard
+	 def like_a(what)
+		p = Nouns.get_template what ;
+		instance_eval(&p) if not p.nil?;
+	 end
 end
