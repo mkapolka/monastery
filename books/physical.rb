@@ -4,10 +4,34 @@ module Properties
 		types :physical
 	end
 
+   class Boilable < Property
+      description "can be boiled"
+      types :physical
+      revealed_by :chem_knowledge
+
+      upon :tick do |me|
+         if me.hot?
+            me.make :boiling
+         end
+      end
+   end
+
+   class Boiling < Property
+      description "is boiling"
+      types :physical
+      revealed_by :look
+
+      upon :tick do |me|
+         if rand() < 0.1
+            me.destroy
+         end
+      end
+   end
+
 	class Hard < Property
 		 description "is hard"
 		 types :physical
-		 revealed_by :look
+		 revealed_by :feel
 
 		 upon :make do |me|
 			 me.say "#{me.name} becomes hard.", :see
@@ -17,6 +41,16 @@ module Properties
 				puts "#{me.name} rings like a gong!"
 		 end
 	end
+
+   class Soft < Property
+      description "is soft"
+      types :physical
+      revealed_by :feel
+
+      upon :make do |me|
+         me.say "#{me.name} becomes soft.", :see
+      end
+   end
 
 	class Hot < Property
 		description "is hot"
@@ -99,28 +133,6 @@ module Properties
 		description "is bumpy"
 	end
 
-	class Container < Property
-		attr_accessor :contents
-
-		def initialize
-			 super;
-			 @contents = [];
-		end
-
-		def +(o)
-			 @contents << o
-			 o.parent = noun;
-		end
-
-		def <<(o)
-			 @contents << o
-			 o.parent = noun;
-		end
-
-		def describe()
-			 "contains " + @contents.reduce(""){ |p,x| p + x.name + " and " }[0..-6]
-		end
-	end
 
 	class Open < Property
 		description  "is open";
@@ -136,6 +148,19 @@ module Properties
 	class Openable < Property
 		description "can be opened"
 
+      upon :make do |me|
+         me.metaclass.class_eval do
+            define_method(:open) do
+               me.make :open
+            end
+
+            define_method(:close) do
+               me.unmake :open
+            end
+         end
+      end
+
+
 		#action "Open" do |me, actor|
 			##move_nearby :actor
 			#me.make :open
@@ -148,32 +173,3 @@ module Properties
 	end
 end
 
-#Container-related methods
-class Noun
-	def contains(*things)
-		is :container
-		things.each do |thing|
-			new_thing = spawn thing
-			container << new_thing if not new_thing.nil?
-		end
-	end
-
-	def contains?(what)
-		return false if not container?
-		return container.contents.index(what) > 0
-	end
-
-	def contains_with_property?(property)
-		return false if not container?
-		return !(container.contents.find{ |x| x.send(property.to_s + "?") }).nil?
-	end
-
-	def contents
-		return nil if not container?
-		return container.contents
-	end
-
-	def touching
-		return me.parent.contents if not me.parents.is_room?
-	end
-end

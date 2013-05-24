@@ -35,20 +35,32 @@ class Noun
       @properties.each_pair do |key, prop|
 				 what = what.to_sym;
 				 next if prop.events.nil?
-				 prop.events[what].call(*args) if not prop.events[what].nil?;
+             prop.instance_exec(args, &prop.events[what]) if not prop.events[what].nil?
+             #prop.events[what].call(*args) if not prop.events[what].nil?;
       end
    end
 
+   def destroy
+      unless self.parent.nil?
+         self.parent.container.remove(self)
+      else
+         puts "Cannot destroy #{self.name} as it doesn't have a parent.";
+      end
+   end
+   
 	 #The Properties of an object are constantly in flux. They may be made or
 	 # unmade at any time, according to the situation of the object.
    def make(*new_props)
 			new_props.each do |property|
 				begin
-					prop_class = Properties.const_get(property.capitalize)
-				rescue
+					prop_class = Properties.get_property(property)
+				rescue => exception
 					puts "Invalid property name: #{property.to_s}";
+               #puts exception.backtrace[0..5];
 					next;
 				end
+
+            property = property.downcase
 
 				unless properties[property].nil?
 					 properties[property].count += 1 
@@ -62,23 +74,21 @@ class Noun
 				end
 			end
    end
-	 alias :is :make;
+   alias :is :make;
    alias :becomes :make
 
-	 def say(text, channel)
-			puts text;
-	 end
-
 	 def unmake(*props)
+      props.flatten!
 		props.each do |prop|
 			begin
-				prop_class = Properties.const_get(prop.capitalize);
-			rescue
+				prop_class = Properties.get_property(prop);
+			rescue => exception
 				puts "Invalid property name: #{prop.to_s}"
+            #puts exception.backtrace[0..5];
 				next;
 			end
-
 			prop = prop.downcase;
+
 			unless properties[prop].nil?
 				properties[prop].count -= 1;
 				if (properties[prop].count <= 0)
@@ -90,6 +100,10 @@ class Noun
 			end
 		end
 	 end
+
+    def get_property(which)
+      return properties[which];
+    end
 
 	 #We can test whether a Noun exemplifies a certain property in this manner:
 	 # "noun.property?" where 'property' is the name of the property. For example,
@@ -122,17 +136,18 @@ class Noun
 	 #Sometimes it is helpful to get all the properties of a Noun that share
 	 # a certain type. 
    def properties_of_type(type)
-      return properties.each_pair.map do |key, value|
-         #!value.types.index(type).nil? 
-         value if !value.types.index(type).nil?
-      end
+      return properties.each_pair.select{ |k,v| puts "Donka: #{v}, #{v.types}"; v.types.find(type).nil? }
+      #return properties.each_pair.map do |key, value|
+         ##!value.types.index(type).nil? 
+         #value if !value.types.index(type).nil?
+      #end
    end
 
 	 #When a method doesn't exist this one is called instead, which allows us to
 	 # check for the existence of a property with the "noun.property?" syntax
 	 # even if that property isn't present in the object.
    def method_missing(method, *args)
-      puts "Mizzing"
+      #puts "Mizzing"
       return false if (method[-1] == "?")
       super.method_missing(method, args)
    end
@@ -146,7 +161,33 @@ class Noun
    end
 
 	 def like_a(what)
-		p = Nouns.get_template what ;
-		instance_eval(&p) if not p.nil?;
+		p = Forms.get_template what
+		instance_eval(&p) if not p.nil?
 	 end
+
+################################################################################
+#                                                                              #
+# Methods that exist as actions in the game fiction.                           #
+#                                                                              #
+################################################################################
+	 def say(text, channel)
+         case channel
+         when :say
+            puts text if self.containing_room == current_player.containing_room;
+         when :do
+            puts text if self == current_player
+         end
+	 end
+
+    def detect(wavelength=:look)
+      out = []
+      @parent.contents.each do |x|
+         out.push(x) unless x.invisible?
+      end
+      return out
+    end
+
+    def visible_objects
+      return detect :look
+    end
 end

@@ -7,13 +7,32 @@
 # they do.                                                                     #
 ################################################################################
 module Properties
+   def get_property(name)
+      begin
+         return const_get(Properties::constants.find{ |x| x.downcase == name.downcase });
+         #return const_get(name) if not const_get(name).nil?
+      rescue
+         return const_get(name.capitalize)
+      end
+   end
+
 	class Property
 		 attr_accessor :count, :value, :noun
+       class_attribute :events, :types, :revelead_by
+      alias :me :noun
+
+      @@properties = {};
+
+      def self.properties
+         return @@properties;
+      end
 
 		 class << self
-				attr_reader :events, :types, :revealed_by
-				@events = {};
+          attr_reader :events, :types, :revealed_by
+          @events = {};
 		 end
+
+       types = [];
 
 		 def initialize
 				@count = 0;
@@ -37,6 +56,10 @@ module Properties
 			 end
 		 end
 
+       def do(event, *args)
+         self.class.events[event.to_sym].call(args)
+       end
+
 		 def self.upon(event, &block)
 			 define_method(event, block);
 			 @events ||= {};
@@ -44,12 +67,20 @@ module Properties
 		 end
 
 		 def self.types(*args)
-				return @types if args.length==0
+				return super if args.length==0
 				@types ||= [];
 				args.each do |x|
 					 @types.push(x) if @types.index(x).nil?
 				end
 		 end
+       
+       def types
+         return self.types;
+       end
+
+      def self.type(args)
+         self.types(args);
+      end
 
 		 def self.revealed_by(*args)
 				return @revealed_by if args.length == 0;
@@ -67,7 +98,7 @@ module Properties
 
 		 def do(what, *args)
 				return if self.events.nil?
-				self.events[what].call(*args) if not events[what].nil?
+            self.instance_exec *args, &self.events[what] unless events[what].nil?
 		 end
 	end
 
