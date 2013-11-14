@@ -27,7 +27,7 @@ module Templates
         end
 
         def self.create
-            thing = Things::Thing.new
+            thing = Thing.new
             thing.name = self.name
             thing.description = self.description
 

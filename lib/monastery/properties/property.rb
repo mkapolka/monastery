@@ -5,12 +5,9 @@ require_relative '../lookup.rb'
 module Templates
 end
 
-module Things
-end
-
 module Properties
     class Property
-        finds_constants_in Templates, Things
+        finds_constants_in Templates
 
         class_attribute :description, :types, :revealed_by
         attr_accessor :owner
