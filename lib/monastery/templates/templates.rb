@@ -1,5 +1,6 @@
 require 'monastery/properties/all.rb'
 require_relative 'template.rb'
+require_relative 'materials.rb'
 
 module Templates
     class Template
@@ -18,6 +19,13 @@ module Templates
 
     class MagicPear < Template
         self.name = "a magic pear"
-        self.properties = [Hard, Flammable, magically(Poisonous)]
+        self.properties = [Flammable, magically(Poisonous)]
+    end
+
+    class TeaKettle < Template
+        material(Metal)
+        self.name = "a tea kettle"
+        self.properties += [Hollow]
+        self.contains_in(Hollow, MagicPear)
     end
 end

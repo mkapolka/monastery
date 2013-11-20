@@ -8,15 +8,24 @@ module Templates
     class Template
         finds_constants_in Properties
         
-        class_attribute :properties, :name, :description
+        class_attribute :properties, :name, :description, :contents
 
         self.properties = []
         self.name = "a thing"
         self.description = "This is a thing"
 
         def self.apply(thing)
-            self.properties each do |property|
+            self.properties.each do |property|
                 thing.make(property)
+            end
+
+            if self.contents != nil then
+                self.contents.each do |place, templates|
+                    templates.each do |template|
+                        content = template.create
+                        content.move(thing.properties[place])
+                    end
+                end
             end
         end
 
@@ -34,6 +43,16 @@ module Templates
             self.apply(thing)
 
             return thing
+        end
+
+        def self.mixin(template)
+            self.properties += template.properties
+        end
+
+        def self.contains_in(place, *things)
+            self.contents ||= {}
+            self.contents[place] ||= []
+            self.contents[place] += things
         end
     end
 

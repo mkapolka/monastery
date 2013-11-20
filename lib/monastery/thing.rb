@@ -24,10 +24,12 @@ class Thing
     end
 
     def set_property(property_class, property_object)
+        property_object.owner = self
         @properties[property_class.key] = property_object
     end
 
     def delete_property(property_class)
+        property_object.owner = nil
         @properties.delete property_class.key
     end
 
@@ -45,7 +47,7 @@ class Thing
             set_property(property_class, property)
         end
 
-        property.make(self)
+        property.make()
     end
 
     def call(method_name, args)
@@ -66,12 +68,16 @@ class Thing
     end
 
     def is?(property_class)
-        self.has_property?(property_class) && self.get_property(property_class).count > 0
+        has_property?(property_class) && self.get_property(property_class).count > 0
+    end
+
+    def not?(property_class)
+        not is? property_class
     end
 
     def describe(method)
         description = ""
-        properties.each do |property|
+        properties.values.each do |property|
             if property.revealed_by? method
                 description += property.describe
             end

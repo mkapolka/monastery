@@ -12,7 +12,11 @@ end
 
 module Properties
     class Location < Property
-        attr_accessor :place
+        class_attribute :location_description
+
+        def place(where)
+            @place
+        end
 
         def place=(where)
             if not @place.nil? then
@@ -29,9 +33,21 @@ module Properties
 
     class Place < Property
         attr_accessor :things_present
+        class_attribute :description_verb
+
+        self.description_verb = "contains"
+
+        def initialize
+            @things_present = []
+        end
 
         def add(thing)
             thing.location.place = self
+        end
+
+        def describe
+            start = "#{self.owner.name} #{self.description_verb}:" 
+            start += self.things_present.map(&:name).join(", ")
         end
     end
 end

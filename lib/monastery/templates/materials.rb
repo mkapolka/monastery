@@ -1,6 +1,12 @@
 require 'monastery/templates/template.rb'
 
 module Templates
+    class Template
+        class << self
+            alias_method :material, :mixin
+        end
+    end
+
     class Material < UniqueSubtemplate
         self.container_property = Properties::Material
     end
@@ -11,7 +17,6 @@ module Templates
     end
 
     class Porcelain < Material
-        #self.properties += [Hard, Brittle]
-        self.properties = [Hard]
+        self.properties = [Hard, Brittle]
     end
 end

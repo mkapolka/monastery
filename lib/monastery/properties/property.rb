@@ -20,9 +20,10 @@ module Properties
 
         def initialize
             @count = 0
+            @random_aggregator = 0.0
         end
 
-        def describe(what)
+        def describe
             return "#{what.name} #{self.class.description}"
         end
 
@@ -30,16 +31,21 @@ module Properties
             return revealed_by.include?(method)
         end
 
-        def random(chance, randomness)
-            return Math.random(1) < chance
+        def random(calls, randomness)
+            @random_aggregator += (rand() * randomness.to_f) * 2 + (1 - randomness)
+
+            if @random_aggregator > calls then
+                @random_aggregator = 0.0
+                return true
+            else
+                return false
+            end
         end
 
-        def make(me)
-            self.owner = me
+        def make(thing, property)
         end
 
-        def unmake(me)
-            self.owner = nil
+        def unmake(thing, property)
         end
 
         def inspect
