@@ -16,7 +16,7 @@ class Thing
 
     def properties(types=nil)
         return @properties if types == nil
-        return @properties.select{|property| property.types.include? types}
+        return @properties.select{|key, property| property.types.include? types}
     end
 
     def get_property(property_class)
@@ -50,9 +50,9 @@ class Thing
         property.make()
     end
 
-    def call(method_name, args)
-        self.properties.each do |key, property|
-            property.send(method_name, args) if property.class.method_defined? method_name
+    def call(method_name, args=nil)
+        self.properties.values.each do |property|
+            property.send(method_name, *args) if property.class.method_defined? method_name
         end
     end
 

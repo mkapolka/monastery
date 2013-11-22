@@ -28,4 +28,15 @@ module Templates
         self.properties += [Hollow]
         self.contains_in(Hollow, MagicPear)
     end
+
+    class Water < Template
+        self.name = "some water"
+        self.properties = [Liquid, Boilable]
+    end
+
+    class Poison < Template
+        material(Water)
+        self.name = "some poison"
+        self.properties += [Poisonous]
+    end
 end

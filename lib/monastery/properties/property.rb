@@ -1,5 +1,6 @@
 require 'active_support/core_ext/class/attribute'
 require 'active_support/inflector'
+require 'monastery/constants.rb'
 require_relative '../lookup.rb'
 
 module Templates
@@ -7,7 +8,7 @@ end
 
 module Properties
     class Property
-        finds_constants_in Templates
+        finds_constants_in Templates, PropertyTypes, RevealMethods
 
         class_attribute :description, :types, :revealed_by
         attr_accessor :owner
@@ -24,7 +25,7 @@ module Properties
         end
 
         def describe
-            return "#{what.name} #{self.class.description}"
+            return "#{owner.name} #{self.class.description}"
         end
 
         def revealed_by?(method)
@@ -42,10 +43,10 @@ module Properties
             end
         end
 
-        def make(thing, property)
+        def make()
         end
 
-        def unmake(thing, property)
+        def unmake()
         end
 
         def inspect

@@ -1,11 +1,12 @@
 require_relative 'property.rb'
 
 def move(thing, where)
-    thing.location.place = where
+    thing.move(where)
 end
 
 class Thing
     def move(where)
+        self.make Location if self.not? Location
         self.location.place = where
     end
 end
@@ -14,7 +15,7 @@ module Properties
     class Location < Property
         class_attribute :location_description
 
-        def place(where)
+        def place()
             @place
         end
 
@@ -22,9 +23,11 @@ module Properties
             if not @place.nil? then
                 @place.owner.call(:removed, self)
                 self.owner.call(:removed_from, @place)
+                @place.contents.delete(owner)
             end
             @place = where
             if not place.nil? then
+                @place.contents << owner
                 @place.owner.call(:added, self)
                 owner.call(:added_to, @place)
             end
@@ -32,13 +35,13 @@ module Properties
     end
 
     class Place < Property
-        attr_accessor :things_present
+        attr_accessor :contents
         class_attribute :description_verb
 
         self.description_verb = "contains"
 
         def initialize
-            @things_present = []
+            @contents = []
         end
 
         def add(thing)
@@ -46,8 +49,8 @@ module Properties
         end
 
         def describe
-            start = "#{self.owner.name} #{self.description_verb}:" 
-            start += self.things_present.map(&:name).join(", ")
+            start = "#{owner.name} #{description_verb}:" 
+            start += contents.map(&:name).join(", ")
         end
     end
 end

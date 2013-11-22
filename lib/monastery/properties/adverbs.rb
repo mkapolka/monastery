@@ -27,12 +27,12 @@ module Properties
             return "by wizardly forces is #{properties.to_sentence}"
         end
 
-        def make(who)
-            who.make gives_property
+        def make()
+            owner.make gives_property
         end
 
-        def unmake(who)
-            who.unmake gives_property
+        def unmake()
+            owner.unmake gives_property
         end
     end
 

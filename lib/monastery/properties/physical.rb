@@ -1,4 +1,5 @@
 require 'active_support/core_ext/class/attribute'
+require 'set'
 require_relative 'property.rb'
 require_relative 'value_property.rb'
 require_relative 'container.rb'
@@ -15,7 +16,8 @@ module Properties
 
     class Hard < Property 
         self.description = "is hard"
-        self.types = [:physical]
+        self.types = [Physical]
+        self.revealed_by = [Touch, Sight]
 
         def make()
             owner.say("#{owner.name} becomes hard")
@@ -24,8 +26,8 @@ module Properties
 
     class Flammable < Property
         self.description = 'is flammable'
-        self.types += [:physical]
-        self.revealed_by = [:chemical_knowledge]
+        self.types += [Physical]
+        self.revealed_by = [ChemistryKnowledge]
 
         def touch(this, other)
             if other.is?(Burning)
@@ -36,14 +38,14 @@ module Properties
 
     class Burning < Property
         self.description = 'is on fire'
-        self.types = [:physical]
-        self.revealed_by = [:sight]
+        self.types = [Physical]
+        self.revealed_by = [Sight]
 
-        def make(this)
-            this.say("#{this.name} catches on fire!", :sight)
+        def make()
+            this.say("#{this.name} catches on fire!", Sight)
         end
 
-        def tick(this)
+        def tick
             if this.random(0.5) then
                 this.unmake(Burning)
             end
@@ -52,20 +54,20 @@ module Properties
 
     class Hot < Property
         self.description = 'is hot'
-        self.types = [:physical]
-        self.revealed_by = [:touch]
+        self.types = [Physical]
+        self.revealed_by = [Touch]
     end
 
     class Poisonous < Property
         self.description = 'is poisonous'
-        self.types = [:chemical]
-        self.revealed_by = [:feel]
+        self.types = [Chemical]
+        self.revealed_by = [Touch]
     end
 
     class Edible < Property
         self.description = 'is edible'
-        self.types = [:physical]
-        self.revealed_by = [:chemical_knowledge]
+        self.types = [Physical]
+        self.revealed_by = [ChemistryKnowledge]
 
         def digest(me, digester)
             me.say("#{me.name} was dissolved into insubstantial mush")
@@ -75,14 +77,14 @@ module Properties
 
     class Soluble < Property
         self.description = 'can be dissolved into liquids'
-        self.types = [:physical]
-        self.revealed_by = [:chemical_knowledge]
+        self.types = [Physical]
+        self.revealed_by = [ChemistryKnowledge]
 
         def touch(other)
             if other.is? Liquid, Hot
                 if me.random(3)
                     me.say("#{me.name} dissolves into #{other.name}")
-                    me.properties(:chemical).each do |property|
+                    me.properties(Chemical).each do |property|
                         
                     end
                 end
@@ -92,10 +94,10 @@ module Properties
 
     class Ossifying < Property
         self.description = 'is turning into stone'
-        self.types = [:physical]
-        self.revealed_by = [:sight, :chemical_knowledge]
+        self.types = [Physical]
+        self.revealed_by = [Sight, ChemistryKnowledge]
 
-        def tick(me)
+        def tick
             if rand(10) == 1
                 p "#{me.name} hardens"
                 me.material = Materials::Stone
@@ -105,36 +107,50 @@ module Properties
 
     class Liquid < Property
         self.description = 'is a liquid'
-        self.types = [:physical]
-        self.revealed_by = [:sight, :feel]
+        self.types = [Physical]
+        self.revealed_by = [Sight, Touch]
 
-        def make(property_class)
-            self.owner.unmake(property_class) if property_class.types.index :mechanical
+        def make()
+            #self.owner.unmake(property_class) if property_class.types.index Mechanical
+        end
+
+        def added_to(place)
+            liquid = place.contents.find{|thing| thing.is? Liquid and thing != owner}
+            if liquid then
+                #Combine this with the other
+                owner.say("#{owner.name} merges with #{liquid.name}")
+                properties = owner.properties(Chemical).values - liquid.properties(Chemical).values
+                properties.each do |property|
+                    owner.make(property.class)
+                end
+                liquid.move(nil)
+            end
         end
     end
 
-    class Boils < Property
+    class Boilable < Property
         self.description = 'can boil'
-        self.types = [:physical]
-        self.revealed_by = [:chemical_knowledge]
+        self.types = [Physical]
+        self.revealed_by = [ChemistryKnowledge]
 
         def tick
-            if owner.is? Hot && owner.not? Boiling && self.random(.1) then
-                self.make(Boiling)
+            if owner.is? Hot and owner.not? Boiling and self.random(10, 0.5) then
+                owner.say("#{owner.name} begins to boil.")
+                owner.make(Boiling)
             end
         end
     end
 
     class Boiling < Property
         self.description = 'is boiling'
-        self.types = [:physical]
-        self.revealed_by = [:sight, :feel]
+        self.types = [Physical]
+        self.revealed_by = [Sight, Touch]
     end
 
     class Brittle < Property
         self.description = 'is brittle'
-        self.types = [:physical]
-        self.revealed_by = [:sight, :feel, :chemical_knowledge]
+        self.types = [Physical]
+        self.revealed_by = [Sight, Touch, ChemistryKnowledge]
         
         def bash(basher)
             self.owner.say("#{self.owner.name} shatters into pieces!")
@@ -147,7 +163,7 @@ module Properties
 
     class Hollow < Place
         self.description = 'is hollow'
-        self.types = [:mechanical]
-        self.revealed_by = [:sight, :feel]
+        self.types = [Mechanical]
+        self.revealed_by = [Sight, Touch]
     end
 end
