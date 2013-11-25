@@ -13,23 +13,23 @@ end
 
 module Properties
     class Location < Property
-        class_attribute :location_description
+        attr_accessor :place
 
-        def place()
-            @place
+        def unmake
+            place.contents.delete(owner) if not place.nil?
         end
 
         def place=(where)
-            if not @place.nil? then
-                @place.owner.call(:removed, self)
-                self.owner.call(:removed_from, @place)
-                @place.contents.delete(owner)
+            if not place.nil? then
+                place.owner.call(:removed, self)
+                self.owner.call(:removed_from, place)
+                place.contents.delete(owner)
             end
             @place = where
             if not place.nil? then
-                @place.contents << owner
-                @place.owner.call(:added, self)
-                owner.call(:added_to, @place)
+                place.contents << owner
+                place.owner.call(:added, self)
+                owner.call(:added_to, place)
             end
         end
     end

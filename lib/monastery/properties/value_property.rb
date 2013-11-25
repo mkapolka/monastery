@@ -6,12 +6,12 @@ module Properties
     class ValueAlias < Property
         class_attribute :initial_value, :parent_class
 
-        def make(me)
-            if not me.is? self.parent_class then
-                me.make(self.parent_class)
+        def make
+            if not owner.is? self.parent_class then
+                owner.make(self.parent_class)
             end
-            self.parent_class.purge_value_aliases(me, self.class)
-            me.get_property(self.parent_class).set_value(self.initial_value, false)
+            self.parent_class.purge_value_aliases(owner, self.class)
+            owner.get_property(self.parent_class).set_value(self.initial_value, false)
             super
         end
     end
@@ -20,21 +20,30 @@ module Properties
         class_attribute :initial_value, :value_aliases
         attr_accessor :value
 
-        def self.values=(hash)
-            self.value_aliases = {}
-            hash.each do |name, value|
-                alias_class = Class.new(ValueAlias)
-                alias_class.initial_value = value
-                alias_class.parent_class = self
+        self.value_aliases = {}
 
-                Properties.const_set(name, alias_class)
-                self.value_aliases[value] = alias_class
+        def self.value
+            @initial_value
+        end
+
+        def self.add_alias(name, initial_value)
+            alias_class = Class.new(ValueAlias)
+            alias_class.initial_value = initial_value
+            alias_class.parent_class = self
+
+            Properties.const_set(name, alias_class)
+            value_aliases[initial_value] = alias_class
+        end
+
+        def self.values=(hash)
+            hash.each do |name, value|
+                self.add_alias(name, value)
             end
         end
 
         def self.purge_value_aliases(thing, ignore)
             self.value_aliases.each do |value, alias_class|
-                thing.delete_property(alias_class) if alias_class != ignore
+                thing.get_property(alias_class).count = 0 if not thing.get_property(alias_class).nil?
             end
         end
 
@@ -60,12 +69,28 @@ module Properties
             return self.value > other.value
         end
 
+        def >=(other)
+            return self.value >= other.value
+        end
+
+        def <=(other)
+            return self.value <= other.value
+        end
+
         def ==(other)
             return self.value == other.value
         end
 
         def !=(other)
             return self.value == other.value
+        end
+    end
+
+    class IntValueProperty < ValueProperty
+        def self.values=(array)
+            array.each_with_index do |name, index|
+                self.add_alias(name, index)
+            end
         end
     end
 end

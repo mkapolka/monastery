@@ -7,6 +7,14 @@ class Thing
         @description = ""
     end
 
+    def destroy
+        self.properties.values.each do |property|
+            property.owner = nil
+            property.unmake
+        end
+        self.properties.clear
+    end
+
     def method_missing(method_name, *args, &block)
         #Nice way of getting at properties
         return @properties[method_name] if @properties.has_key? method_name
@@ -51,20 +59,21 @@ class Thing
     end
 
     def call(method_name, args=nil)
-        self.properties.values.each do |property|
+        self.properties.each do |key, property|
             property.send(method_name, *args) if property.class.method_defined? method_name
         end
+        clear_unmade_properties
     end
 
     def unmake(property_class)
         property_key = property_class.key
         if self.has_property? property_class
-            if self.get_property(property_class).count > 1
-                self.get_property(property_class).count -= 1
-            else
-                properties.delete(property_key)
-            end
+            self.get_property(property_class).count -= 1
         end
+    end
+
+    def clear_unmade_properties
+        self.properties.reject!{|key, value| value.count <= 0}
     end
 
     def is?(property_class)

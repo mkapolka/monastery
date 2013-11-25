@@ -31,7 +31,7 @@ module Templates
 
     class Water < Template
         self.name = "some water"
-        self.properties = [Liquid, Boilable]
+        self.properties = [Liquid, Boilable, AverageSize]
     end
 
     class Poison < Template
