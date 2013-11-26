@@ -94,7 +94,7 @@ module Properties
         end
     end
 
-    class Hollow < Place
+    class Hollow < Container
         self.description = 'is hollow'
         self.types = [Mechanical]
         self.revealed_by = [Sight, Touch]
@@ -126,6 +126,26 @@ module Properties
                 end
                 smaller.destroy
             end
+        end
+    end
+
+    class Open < Property
+        self.description = 'is open'
+        self.types = [Mechanical]
+        self.revealed_by = [Sight, Touch]
+    end
+
+    class Openable < Property
+        self.description = 'can be opened'
+        self.types = [Mechanical]
+        self.revealed_by = [Sight, Touch]
+
+        def open
+            owner.make Open if owner.not? Open
+        end
+
+        def close
+            owner.unmake Open if owner.is? Open
         end
     end
 
@@ -185,4 +205,11 @@ module Properties
             'Hot'
         ]
     end
+
+    class Waterproof < Property
+        self.description = 'is waterproof'
+        self.types = [Physical]
+        self.revealed_by = [Sight, Touch]
+    end
+
 end

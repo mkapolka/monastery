@@ -16,7 +16,8 @@ module Properties
         attr_accessor :place
 
         def unmake
-            place.contents.delete(owner) if not place.nil?
+            self.place = nil
+            super
         end
 
         def place=(where)
@@ -51,6 +52,15 @@ module Properties
         def describe
             start = "#{owner.name} #{description_verb}:" 
             start += contents.map(&:name).join(", ")
+        end
+    end
+
+    class Container < Place
+        def add(thing)
+            if thing.is? Liquid and not owner.is? Waterproof then
+                owner.say "#{thing.name} pours through #{owner.name}"
+                thing.move owner.location
+            end
         end
     end
 end

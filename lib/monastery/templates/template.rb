@@ -23,7 +23,7 @@ module Templates
                 self.contents.each do |place, templates|
                     templates.each do |template|
                         content = template.create
-                        content.move(thing.properties[place])
+                        content.move(thing.get_property place)
                     end
                 end
             end
@@ -32,6 +32,19 @@ module Templates
         def self.unapply(thing)
             self.properties each do |property|
                 thing.unmake(property)
+            end
+        end
+
+        def self.swap(thing, other_template)
+            remove = other_template.properties - self.properties
+            add = self.properties - other_template.properties
+
+            remove.each do |property|
+                thing.unmake property
+            end
+
+            add.each do |property|
+                thing.make property
             end
         end
 

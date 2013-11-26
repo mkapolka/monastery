@@ -9,8 +9,8 @@ class Thing
 
     def destroy
         self.properties.values.each do |property|
-            property.owner = nil
             property.unmake
+            property.owner = nil
         end
         self.properties.clear
     end
@@ -100,5 +100,20 @@ class Thing
     
     def materials=(material_class)
         material_class.apply(self)
+    end
+
+    def contents(types=nil)
+        output = []
+        if types.nil? then
+            places = self.properties types
+        else
+            places = self.properties.values
+        end
+
+        places.values.each do |place|
+            output.concat(place.contents) if place.class < Place
+        end
+
+        return output
     end
 end

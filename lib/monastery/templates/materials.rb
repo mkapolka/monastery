@@ -13,7 +13,11 @@ module Templates
 
     class Metal < Material
         #self.properties += [Hard, Conductive]
-        self.properties = [Hard]
+        self.properties = [Hard, Waterproof]
+    end
+
+    class Paper < Material
+        self.properties = []
     end
 
     class Porcelain < Material

@@ -22,16 +22,16 @@ module Templates
         self.properties = [Flammable, magically(Poisonous)]
     end
 
+    class Water < Template
+        self.name = "some water"
+        self.properties = [Liquid, Boilable, AverageSize]
+    end
+
     class TeaKettle < Template
         material(Metal)
         self.name = "a tea kettle"
         self.properties += [Hollow]
-        self.contains_in(Hollow, MagicPear)
-    end
-
-    class Water < Template
-        self.name = "some water"
-        self.properties = [Liquid, Boilable, AverageSize]
+        self.contains_in(Hollow, Water)
     end
 
     class Poison < Template

@@ -16,22 +16,19 @@ module Properties
             return @subtemplate
         end
 
-        def make(me)
+        def make
             super
             if self.subtemplate != nil
                 subtemplate.apply(me)
             end
         end
 
-        def unmake(me)
+        def unmake
             super
             if self.subtemplate != nil
                 subtemplate.unapply(me)
             end
         end
-    end
-
-    class Form < SubtemplateProperty
     end
 
     class Material < SubtemplateProperty
