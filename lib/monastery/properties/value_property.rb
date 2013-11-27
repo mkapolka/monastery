@@ -6,7 +6,7 @@ module Properties
     class ValueAlias < Property
         class_attribute :initial_value, :parent_class
 
-        def make
+        def become
             if not owner.is? self.parent_class then
                 owner.make(self.parent_class)
             end

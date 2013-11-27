@@ -1,14 +1,14 @@
 require 'active_support/core_ext/class/attribute'
 require 'active_support/inflector'
 require 'monastery/constants.rb'
-require_relative '../lookup.rb'
+require 'monastery/lookup.rb'
 
 module Templates
 end
 
 module Properties
     class Property
-        finds_constants_in Templates, PropertyTypes, RevealMethods
+        finds_constants_in Templates, PropertyTypes, RevealMethods, Actions
 
         class_attribute :description, :types, :revealed_by
         attr_accessor :owner
@@ -43,14 +43,20 @@ module Properties
             end
         end
 
-        def make()
+        def make(property_class)
         end
 
-        def unmake()
+        def unmake(property_class)
+        end
+
+        def become
+        end
+
+        def cease
         end
 
         def inspect
-            return self.class.name.demodulize
+            return "Property(#{self.class.name.demodulize})"
         end
 
         #The key that will be used in the containing Thing's 

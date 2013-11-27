@@ -15,22 +15,22 @@ module Properties
     class Location < Property
         attr_accessor :place
 
-        def unmake
+        def cease
             self.place = nil
             super
         end
 
         def place=(where)
             if not place.nil? then
-                place.owner.call(:removed, self)
-                self.owner.call(:removed_from, place)
+                place.owner.call(Removed, self)
+                owner.call(RemovedFrom, place)
                 place.contents.delete(owner)
             end
             @place = where
             if not place.nil? then
                 place.contents << owner
-                place.owner.call(:added, self)
-                owner.call(:added_to, place)
+                place.owner.call(Added, self)
+                owner.call(AddedTo, place)
             end
         end
     end
@@ -55,11 +55,14 @@ module Properties
         end
     end
 
+    #A place located inside of an object
     class Container < Place
-        def add(thing)
-            if thing.is? Liquid and not owner.is? Waterproof then
-                owner.say "#{thing.name} pours through #{owner.name}"
-                thing.move owner.location
+        def tick
+            contents.each_with_index do |thing, index|
+                contents[index..-1].each do |other_thing|
+                    thing.call(Touch, other_thing)
+                    other_thing.call(Touch, thing)
+                end
             end
         end
     end

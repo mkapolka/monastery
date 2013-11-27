@@ -50,10 +50,6 @@ module Properties
         self.types = [Physical]
         self.revealed_by = [Sight]
 
-        def make()
-            this.say("#{this.name} catches on fire!", Sight)
-        end
-
         def tick
             if this.random(0.5) then
                 this.unmake(Burning)
@@ -88,10 +84,6 @@ module Properties
         self.description = "is hard"
         self.types = [Physical]
         self.revealed_by = [Touch, Sight]
-
-        def make()
-            owner.say("#{owner.name} becomes hard")
-        end
     end
 
     class Hollow < Container
@@ -105,26 +97,35 @@ module Properties
         self.types = [Physical]
         self.revealed_by = [Sight, Touch]
 
-        def make()
-            #self.owner.unmake(property_class) if property_class.types.index Mechanical
+        def merge_with(other_liquid)
+            if other_liquid.is? Size and owner.is? Size then
+                bigger = other_liquid.size > owner.size ? other_liquid : owner
+            else
+                bigger = rand() < 0.5 ? other_liquid : owner
+            end
+            smaller = bigger == other_liquid ? owner : other_liquid
+            #Combine this with the other
+            owner.say("#{smaller.name} merges with #{bigger.name}")
+            properties = bigger.properties(Chemical).values - smaller.properties(Chemical).values
+            properties.each do |property|
+                bigger.make(property.class)
+            end
+            smaller.destroy
         end
 
         def added_to(place)
             liquid = place.contents.find{|thing| thing.is? Liquid and thing != owner}
+            #Merge with other liquids
             if liquid then
-                if liquid.is? Size and owner.is? Size then
-                    bigger = liquid.size > owner.size ? liquid : owner
-                else
-                    bigger = rand() < 0.5 ? liquid : owner
+                merge_with(liquid)
+            end
+
+            #Fall out if the container isn't waterproof
+            if place.instance_of? Container
+                if place.not? Watertight
+                    owner.say "#{owner.name} seeps through #{place.owner.name}"
+                    owner.move place.owner.location
                 end
-                smaller = bigger == liquid ? owner : liquid
-                #Combine this with the other
-                owner.say("#{smaller.name} merges with #{bigger.name}")
-                properties = bigger.properties(Chemical).values - smaller.properties(Chemical).values
-                properties.each do |property|
-                    bigger.make(property.class)
-                end
-                smaller.destroy
             end
         end
     end
@@ -178,7 +179,6 @@ module Properties
         ]
     end
 
-
     class Soluble < Property
         self.description = 'can be dissolved into liquids'
         self.types = [Physical]
@@ -186,10 +186,11 @@ module Properties
 
         def touch(other)
             if other.is? Liquid, Hot
-                if me.random(3)
-                    me.say("#{me.name} dissolves into #{other.name}")
-                    me.properties(Chemical).each do |property|
-                        
+                if self.random(3, 1)
+                    owner.say("#{me.name} dissolves into #{other.name}")
+                    owner.properties(Chemical).each do |property|
+                        other.make(property.class)
+                        self.destroy
                     end
                 end
             end
@@ -206,7 +207,7 @@ module Properties
         ]
     end
 
-    class Waterproof < Property
+    class Watertight < Property
         self.description = 'is waterproof'
         self.types = [Physical]
         self.revealed_by = [Sight, Touch]

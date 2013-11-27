@@ -1,4 +1,8 @@
+require 'monastery/constants.rb'
+require 'monastery/lookup.rb'
+
 class Thing
+    finds_constants_in Actions
     attr_accessor :properties, :name, :description
 
     def initialize
@@ -7,9 +11,13 @@ class Thing
         @description = ""
     end
 
+    def inspect
+        return "Thing(#{name})"
+    end
+
     def destroy
         self.properties.values.each do |property|
-            property.unmake
+            property.cease
             property.owner = nil
         end
         self.properties.clear
@@ -53,9 +61,32 @@ class Thing
             property = property_class.new
             property.count = 1
             set_property(property_class, property)
+            property.become
         end
 
-        property.make()
+        properties.each do |key, value|
+            property.make(property_class)
+        end
+    end
+
+    def unmake(property_class, force: false)
+        property_key = property_class.key
+        if self.has_property? property_class
+            prop = self.get_property(property_class)
+            if not force
+                prop.count -= 1
+            else
+                prop.count = 0
+            end
+
+            if prop.count == 0 then
+                prop.cease()
+            end
+            
+            self.properties.each do |key, property|
+                property.unmake(property_class)
+            end
+        end
     end
 
     def call(method_name, args=nil)
@@ -65,15 +96,8 @@ class Thing
         clear_unmade_properties
     end
 
-    def unmake(property_class)
-        property_key = property_class.key
-        if self.has_property? property_class
-            self.get_property(property_class).count -= 1
-        end
-    end
-
     def clear_unmade_properties
-        self.properties.reject!{|key, value| value.count <= 0}
+        self.properties.reject!{|key, value| value.count == 0}
     end
 
     def is?(property_class)
