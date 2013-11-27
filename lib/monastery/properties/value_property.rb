@@ -36,6 +36,7 @@ module Properties
         end
 
         def self.values=(hash)
+            self.value_aliases = []
             hash.each do |name, value|
                 self.add_alias(name, value)
             end
@@ -43,7 +44,7 @@ module Properties
 
         def self.purge_value_aliases(thing, ignore)
             self.value_aliases.each do |value, alias_class|
-                thing.get_property(alias_class).count = 0 if not thing.get_property(alias_class).nil?
+                thing.unmake(alias_class, force: true) if alias_class != ignore
             end
         end
 
@@ -88,6 +89,7 @@ module Properties
 
     class IntValueProperty < ValueProperty
         def self.values=(array)
+            self.value_aliases = {}
             array.each_with_index do |name, index|
                 self.add_alias(name, index)
             end

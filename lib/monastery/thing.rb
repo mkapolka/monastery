@@ -9,6 +9,8 @@ class Thing
         @properties = {}
         @name = "a thing"
         @description = ""
+
+        @clear_unmade_properties = true
     end
 
     def inspect
@@ -81,6 +83,7 @@ class Thing
 
             if prop.count == 0 then
                 prop.cease()
+                self.properties.delete(prop.class.key) if @clear_unmade_properties
             end
             
             self.properties.each do |key, property|
@@ -90,10 +93,13 @@ class Thing
     end
 
     def call(method_name, args=nil)
+        old_cup = @clear_unmade_properties
+        @clear_unmade_properties = false
         self.properties.each do |key, property|
             property.send(method_name, *args) if property.class.method_defined? method_name
         end
-        clear_unmade_properties
+        self.clear_unmade_properties()
+        @clear_unmade_properties = old_cup
     end
 
     def clear_unmade_properties
