@@ -51,8 +51,9 @@ module Properties
         self.revealed_by = [Sight]
 
         def tick
-            if this.random(0.5) then
-                this.unmake(Burning)
+            if self.random(10, 0.25) then
+                owner.say "#{owner.name} sputters out."
+                owner.unmake(Burning)
             end
         end
     end
@@ -205,6 +206,26 @@ module Properties
             'Warm',
             'Hot'
         ]
+
+        def tick
+            places = owner.properties.values.select {|value| value.kind_of? Place} 
+            places.each do |place|
+                if place.kind_of? Container
+                    place.contents.each do |content|
+                        content.make AverageTemperature if not content.is? Temperature
+                        if content.temperature.value != self.value and self.random(10, 0.1, aggregator: content)
+                            if content.temperature.value < self.value
+                                content.say "#{content.name} heats up"
+                                content.temperature.value += 1
+                            else
+                                content.say "#{content.name} cools down"
+                                content.temperature.value -= 1
+                            end
+                        end
+                    end
+                end
+            end
+        end
     end
 
     class Watertight < Property

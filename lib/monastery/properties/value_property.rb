@@ -6,6 +6,10 @@ module Properties
     class ValueAlias < Property
         class_attribute :initial_value, :parent_class
 
+        def self.value
+            return self.initial_value
+        end
+
         def become
             if not owner.is? self.parent_class then
                 owner.make(self.parent_class)
@@ -23,7 +27,7 @@ module Properties
         self.value_aliases = {}
 
         def self.value
-            @initial_value
+            self.initial_value
         end
 
         def self.add_alias(name, initial_value)

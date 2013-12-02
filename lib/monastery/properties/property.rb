@@ -21,7 +21,7 @@ module Properties
 
         def initialize
             @count = 0
-            @random_aggregator = 0.0
+            @random_aggregators = {}
         end
 
         def describe
@@ -32,11 +32,12 @@ module Properties
             return revealed_by.include?(method)
         end
 
-        def random(calls, randomness)
-            @random_aggregator += (rand() * randomness.to_f) * 2 + (1 - randomness)
+        def random(calls, randomness, aggregator: :default)
+            @random_aggregators[aggregator] ||= 0.0
+            @random_aggregators[aggregator] += (rand() * randomness.to_f) * 2 + (1 - randomness)
 
-            if @random_aggregator > calls then
-                @random_aggregator = 0.0
+            if @random_aggregators[aggregator] > calls then
+                @random_aggregators[aggregator] = 0.0
                 return true
             else
                 return false

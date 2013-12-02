@@ -96,7 +96,7 @@ class Thing
         old_cup = @clear_unmade_properties
         @clear_unmade_properties = false
         self.properties.each do |key, property|
-            property.send(method_name, *args) if property.class.method_defined? method_name
+            property.send(method_name, *args) if property.respond_to? method_name
         end
         self.clear_unmade_properties()
         @clear_unmade_properties = old_cup

@@ -49,6 +49,10 @@ module Properties
             thing.location.place = self
         end
 
+        def tick
+            contents.each{|c| c.call :tick}
+        end
+
         def describe
             start = "#{owner.name} #{description_verb}:" 
             start += contents.map(&:name).join(", ")
@@ -58,6 +62,7 @@ module Properties
     #A place located inside of an object
     class Container < Place
         def tick
+            super
             contents.each_with_index do |thing, index|
                 contents[index..-1].each do |other_thing|
                     thing.call(Touch, other_thing)
