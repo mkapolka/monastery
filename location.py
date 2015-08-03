@@ -5,6 +5,9 @@ class Location(object):
         # Static exits for rooms
         self.exits = []
 
+    def __repr__(self):
+        return '<Location:"%s">' % self.name
+
     def can_contain(self, thing):
         return True
 
@@ -33,6 +36,7 @@ class Location(object):
     def name(self, value):
         self._name = value
 
+
 class PropertyLocation(Location):
     """ For locations implanted within properties """
     def __init__(self, prop):
@@ -49,6 +53,7 @@ class PropertyLocation(Location):
             'thing_name': self.thing.name,
             'prop': self.prop
         }
+
 
 class Exit(object):
     def __init__(self):
@@ -74,6 +79,7 @@ class Exit(object):
     def to_location(self):
         raise NotImplementedError()
 
+
 class StaticExit(Exit):
     """ Exits with a static exit location, i.e. built in room exits """
 
@@ -90,6 +96,7 @@ class StaticExit(Exit):
     @property
     def to_location(self):
         return self._to_loc
+
 
 class OutsideExit(Exit):
     """ Exits to outside the given thing """
@@ -112,6 +119,7 @@ class OutsideExit(Exit):
     @property
     def from_location(self):
         return self._from_location
+
 
 class EntranceExit(Exit):
     """ Entrance into a particular thing """

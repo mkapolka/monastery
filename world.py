@@ -1,7 +1,7 @@
 import itertools
 
-from location import *
-from templates.templates import *
+from location import Location, StaticExit
+from templates.templates import Firepit, Teapot, Barrel, Mortar
 
 places = {
     "monastery_garden": {
@@ -12,9 +12,10 @@ places = {
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
         "exits": ["monastery_garden"],
-        "things": [Firepit, Teapot, Barrel]
+        "things": [Firepit, Teapot, Barrel, Mortar]
     }
 }
+
 
 def make_locations(places):
     output = {}
@@ -30,15 +31,18 @@ def make_locations(places):
 
     return output
 
+
 def _recurse_thing_locations(thing):
     return itertools.chain(*[
         _recurse_location(l) for l in thing.locations
     ])
 
+
 def _recurse_location(location):
     return itertools.chain([location], *[
         _recurse_thing_locations(t) for t in location.things
     ])
+
 
 class World(object):
     def __init__(self):

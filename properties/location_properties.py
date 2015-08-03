@@ -1,17 +1,20 @@
 import itertools
 
 from property import Property
-from location import Location, PropertyLocation, StaticExit, OutsideExit, EntranceExit
+from location import PropertyLocation, StaticExit, OutsideExit, EntranceExit
+
 
 def get_location_properties(thing):
     return [
         p for p in thing.properties.values() if isinstance(p, LocationProperty)
     ]
 
+
 def get_all_locations(thing):
     return itertools.chain(*[
         lp.locations.values() for lp in get_location_properties(thing)
     ])
+
 
 def entrances_to_thing(thing):
     output = []
@@ -20,9 +23,20 @@ def entrances_to_thing(thing):
             output.append(entrance)
     return output
 
+
 def get_all_contents(thing):
     return itertools.chain(*[
         l.things for l in get_all_locations(thing)
+    ])
+
+
+def is_location_accessible(location, for_whom):
+    return True
+
+
+def get_accessible_things(thing):
+    return itertools.chain(thing.location.things, *[
+        get_all_contents(t) for t in thing.location.things
     ])
 
 
@@ -65,6 +79,7 @@ class LocationProperty(Property):
     def get_all_things(self):
         return itertools.chain(*[location.things for location in self.locations.values()])
 
+
 class IsContainer(LocationProperty):
     locations_template = {
         'contents': {
@@ -79,6 +94,7 @@ class IsContainer(LocationProperty):
             'description': 'Into %(thing)s'
         }
     ]
+
 
 class HasStomach(LocationProperty):
     locations_template = {

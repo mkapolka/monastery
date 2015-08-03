@@ -1,5 +1,6 @@
 from properties.location_properties import LocationProperty
 
+
 class Thing(object):
     class Size(object):
         non_physical = -1000
@@ -17,6 +18,9 @@ class Thing(object):
         self.material = None
         self.size = Thing.Size.medium
         self.is_player = False
+
+    def __repr__(self):
+        return '<Thing:%s>' % self.name
 
     def tell(self, message):
         if self.is_player:
@@ -73,12 +77,21 @@ class Thing(object):
             prop.count += 1
             self.__add_property(prop)
 
-    def unbecome(self, property_class):
+    def unbecome(self, property_class, force=False):
         prop = self.__get_property(property_class)
         if prop:
-            prop.count -= 1
+            if force:
+                prop.count = 0
+            else:
+                prop.count -= 1
+
             if prop.count == 0:
                 self.__remove_property(prop)
+
+    def get_properties_of_types(self, types):
+        return [
+            p for p in self.properties.values() if set(p.types).intersection(types)
+        ]
 
     def has_properties(self, properties):
         return all(map(lambda x: self.is_property(x), properties))

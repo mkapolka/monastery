@@ -8,6 +8,6 @@ def number_prompt(options, prompt, str_func):
         if value == 'q':
             return None
         try:
-            return options[int(value)-1]
-        except ValueError, IndexError:
+            return options[int(value) - 1]
+        except (ValueError, IndexError):
             print "Invalid choice. Choose 1-%d or 'q'" % len(options)
