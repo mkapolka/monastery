@@ -36,11 +36,6 @@ class Heavy(Property):
     description = 'is heavy'
 
 
-class Holdable(Property):
-    types = ['mechanical']
-    description = 'can be picked up'
-
-
 class Hot(Property):
     types = []
     description = 'is hot'

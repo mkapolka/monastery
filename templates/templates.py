@@ -2,9 +2,9 @@ import sys
 
 from form import Form
 from properties.forms import Human
-from properties.location_properties import IsContainer, Inventory
-from properties.materials import Metal, Wood, Stone
-from properties.properties import Edible, Holdable, ShrinkOnEat, Hot, TeapotShaped, MortarShaped
+from properties.location_properties import IsContainer, Inventory, HasStomach
+from properties.materials import Metal, Wood, Stone, Flesh
+from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped
 from thing import Thing
 
 
@@ -56,8 +56,8 @@ class FormTemplate(Template):
 
 class Apple(Template):
     name = "an apple"
-    properties = [Edible, Holdable, ShrinkOnEat]
-    size = Thing.Size.small
+    properties = [Edible, ShrinkOnEat]
+    size = Thing.Size.apple
 
 
 class Barrel(Template):
@@ -75,6 +75,13 @@ class Barrel(Template):
     }
 
 
+class Cat(Template):
+    name = "A dozy cat"
+    properties = [HasStomach]
+    material = Flesh
+    size = Thing.Size.dog
+
+
 class Firepit(Template):
     name = "A fire pit"
     properties = [IsContainer, Hot]
@@ -84,7 +91,7 @@ class Firepit(Template):
 
 class Mortar(Template):
     name = "A mortar & pestle"
-    properties = [MortarShaped, Holdable]
+    properties = [MortarShaped]
     size = Thing.Size.small
     material = Stone
 
@@ -93,13 +100,13 @@ class Player(Template):
     name = "The player"
     properties = [Inventory]
     form = Human
-    material = None
+    material = Flesh
 
 
 class Teapot(Template):
     name = "A teapot"
     size = Thing.Size.small
-    properties = [Holdable, IsContainer, TeapotShaped]
+    properties = [IsContainer, TeapotShaped]
     form = None
     material = Metal
 

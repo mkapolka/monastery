@@ -1,4 +1,6 @@
 class Action(object):
+    prereq = None
+
     @classmethod
     def describe(cls, thing):
         return "Do something?"

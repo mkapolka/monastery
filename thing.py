@@ -4,9 +4,18 @@ from properties.location_properties import LocationProperty
 class Thing(object):
     class Size(object):
         non_physical = -1000
-        small = 1
-        medium = 2
-        large = 3
+        seed = 0  # The size of an apple seed
+        apple = 1  # The size of an apple
+        teapot = 2  # The size of a teapot
+        dog = 3  # The size of a dog
+        stool = 4  # The size of an ottoman
+        person = 5  # The size of a human
+        armoire = 6
+
+        small = teapot
+        medium = person
+        large = armoire
+
         room = 1000
 
     def __init__(self):

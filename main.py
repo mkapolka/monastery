@@ -3,8 +3,9 @@ import logging
 
 from actions import actions_for_thing
 from properties.location_properties import Inventory, get_accessible_things
-from templates.templates import Player
 from reaction import process_event_queue, process_tick_events
+from templates.templates import Player
+from thing import Thing
 from utils import number_prompt
 from world import World
 
@@ -24,10 +25,13 @@ def examine_thing(thing):
             print '  %s' % prop.description
     # print size
     sizes = {
-        0: 'tiny',
-        1: 'small',
-        2: 'medium sized',
-        3: 'large'
+        Thing.Size.seed: 'about the size of a seed',
+        Thing.Size.apple: 'about the size of an apple',
+        Thing.Size.teapot: 'about the size of an teapot',
+        Thing.Size.dog: 'about the size of a dog',
+        Thing.Size.stool: 'about the size of a stool',
+        Thing.Size.person: 'about the size of a person',
+        Thing.Size.armoire: 'about the size of a armoire',
     }
     if thing.size in sizes.keys():
         print '  is %s' % sizes[thing.size]

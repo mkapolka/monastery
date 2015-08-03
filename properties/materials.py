@@ -15,3 +15,7 @@ class Stone(Material):
 class Wood(Material):
     name = 'wood'
     properties = [Flammable, Phlogiston]
+
+
+class Flesh(Material):
+    properties = [Flammable, Phlogiston]

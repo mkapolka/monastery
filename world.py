@@ -1,13 +1,13 @@
 import itertools
 
 from location import Location, StaticExit
-from templates.templates import Firepit, Teapot, Barrel, Mortar
+from templates.templates import Firepit, Teapot, Barrel, Mortar, Cat
 
 places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
         "exits": ["monastery_kitchen"],
-        "things": []
+        "things": [Cat]
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",

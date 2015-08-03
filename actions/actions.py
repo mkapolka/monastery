@@ -1,19 +1,16 @@
 from action import Action
-from properties import Holdable, Immobile, Inventory, IsContainer, HasStomach, Edible, MortarShaped, Dissolvable
+from properties import Immobile, Inventory, IsContainer, HasStomach, Edible, MortarShaped, Dissolvable
 from properties.location_properties import entrances_to_thing, get_all_contents, get_accessible_things
 from utils import number_prompt
 
 
 def can_hold(holder, thing):
-    return thing.is_property(Holdable) and \
-        not thing.is_property(Immobile) and \
+    return not thing.is_property(Immobile) and \
         thing.size < holder.size and \
         thing.location not in holder.locations
 
 
 class PickupAction(Action):
-    prereq = Holdable
-
     @classmethod
     def describe(cls, thing):
         return "Take %s" % thing.name
@@ -29,8 +26,6 @@ class PickupAction(Action):
 
 
 class DropAction(Action):
-    prereq = Holdable
-
     @classmethod
     def describe(cls, thing):
         return "Drop %s" % thing.name
