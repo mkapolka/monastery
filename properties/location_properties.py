@@ -14,6 +14,8 @@ def are_touching(thing, other_thing):
     if thing.location.size == Size.room:
         return False
 
+    return True
+
 
 def get_location_properties(thing):
     return [

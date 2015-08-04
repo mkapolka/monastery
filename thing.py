@@ -74,14 +74,15 @@ class Thing(object):
     def get_property(self, property_class):
         return self.__get_property(property_class)
 
-    def become(self, property_class):
-        prop = self.__get_property(property_class)
-        if prop:
-            prop.count += 1
-        else:
-            prop = property_class(self)
-            prop.count += 1
-            self.__add_property(prop)
+    def become(self, *property_classes):
+        for property_class in property_classes:
+            prop = self.__get_property(property_class)
+            if prop:
+                prop.count += 1
+            else:
+                prop = property_class(self)
+                prop.count += 1
+                self.__add_property(prop)
 
     def unbecome(self, property_class, force=False):
         prop = self.__get_property(property_class)

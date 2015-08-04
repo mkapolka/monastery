@@ -6,10 +6,14 @@ class Location(object):
         self._name = 'Nowhere in particular'
         # Static exits for rooms
         self.exits = []
-        self.size = Size.room
+        self._size = Size.room
 
     def __repr__(self):
         return '<Location:"%s">' % self.name
+
+    @property
+    def size(self):
+        return self._size
 
     def can_contain(self, thing):
         return True
