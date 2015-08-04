@@ -19,6 +19,17 @@ class Location(object):
             self.things.append(thing)
         thing.location = self
 
+    def tell(self, message):
+        for thing in self.things:
+            thing.tell(message)
+
+    def remove_thing(self, thing):
+        """
+        Should only be called when an object is destroyed,
+        otherwise use add_thing to maintain thing location consistency
+        """
+        self.things.remove(thing)
+
     def get_all_exits(self):
         """ Static and property exits """
         result = []
@@ -41,11 +52,14 @@ class PropertyLocation(Location):
     """ For locations implanted within properties """
     def __init__(self, prop):
         super(PropertyLocation, self).__init__()
-        self.thing = prop.thing
         self.prop = prop
 
     def can_contain(self, thing):
-        return thing.size < self.thing.size
+        return thing.size <= self.thing.size and thing != self.thing
+
+    @property
+    def thing(self):
+        return self.prop.thing
 
     @property
     def name(self):
@@ -70,6 +84,13 @@ class Exit(object):
 
     def can_traverse(self, thing):
         return True
+
+    def can_access(self, thing):
+        """
+        Used for i.e. reaching into containers and pulling things out
+        without actually entering them
+        """
+        return False
 
     @property
     def from_location(self):
@@ -98,19 +119,31 @@ class StaticExit(Exit):
         return self._to_loc
 
 
-class OutsideExit(Exit):
-    """ Exits to outside the given thing """
-
-    def __init__(self, from_loc, thing):
-        super(OutsideExit, self).__init__()
-        self._from_location = from_loc
+class ThingExit(Exit):
+    def __init__(self, thing, access_requirements=None):
+        super(ThingExit, self).__init__()
         self._thing = thing
-        self.description_template = 'Out of %(thing)s'
+        self._access_requirements = access_requirements or []
 
     def _get_description_parameters(self):
-        d = super(OutsideExit, self)._get_description_parameters()
+        d = super(ThingExit, self)._get_description_parameters()
         d.update({'thing': self._thing.name})
         return d
+
+    def can_access(self, thing):
+        return all(map(lambda x: self._thing.is_property(x), self._access_requirements))
+
+    def can_traverse(self, thing):
+        return thing.size <= self._thing.size
+
+
+class OutsideExit(ThingExit):
+    """ Exits to outside the given thing """
+
+    def __init__(self, from_loc, thing, access_requirements=None):
+        super(OutsideExit, self).__init__(thing, access_requirements)
+        self._from_location = from_loc
+        self.description_template = 'Out of %(thing)s'
 
     @property
     def to_location(self):
@@ -121,17 +154,12 @@ class OutsideExit(Exit):
         return self._from_location
 
 
-class EntranceExit(Exit):
+class EntranceExit(ThingExit):
     """ Entrance into a particular thing """
-    def __init__(self, thing, to_loc):
-        self._thing = thing
+    def __init__(self, thing, to_loc, access_requirements=None):
+        super(EntranceExit, self).__init__(thing, access_requirements)
         self._to_location = to_loc
         self.description_template = 'Into %(thing)s'
-
-    def _get_description_parameters(self):
-        d = super(EntranceExit, self)._get_description_parameters()
-        d.update({'thing': self._thing.name})
-        return d
 
     @property
     def to_location(self):

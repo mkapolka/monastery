@@ -1,5 +1,5 @@
 from reaction import Reaction, enqueue_event, Event
-from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped, Boiling
+from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped, Boiling, Hot
 from properties.location_properties import HasStomach, get_all_contents
 
 
@@ -55,3 +55,15 @@ class WhistleyTeapot(Reaction):
         for thing in get_all_contents(event.target):
             if thing.is_property(Boiling):
                 event.target.tell_room("%s begins whistling furiously!" % event.target.name)
+
+
+class HeatContents(Reaction):
+    predicates = [Hot]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        for thing in get_all_contents(event.target):
+            if not thing.is_property(Hot):
+                thing.tell_room("%s heats up." % thing.name)
+                thing.become(Hot)

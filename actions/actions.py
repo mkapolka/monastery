@@ -1,61 +1,46 @@
 from action import Action
-from properties import Immobile, Inventory, IsContainer, HasStomach, Edible, MortarShaped, Dissolvable
-from properties.location_properties import entrances_to_thing, get_all_contents, get_accessible_things
+from properties import Immobile, Inventory, IsContainer, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
+from properties.location_properties import entrances_to_thing, get_all_contents, get_accessible_things, get_accessible_locations
 from utils import number_prompt
 
 
 def can_hold(holder, thing):
     return not thing.is_property(Immobile) and \
-        thing.size < holder.size and \
-        thing.location not in holder.locations
+        not thing.is_property(Liquid) and \
+        thing.size < holder.size
 
 
-class PickupAction(Action):
+class MoveAction(Action):
     @classmethod
     def describe(cls, thing):
-        return "Take %s" % thing.name
+        return "Move %s" % thing.name
 
     @classmethod
-    def can_perform(self, thing, pick_upper):
-        return can_hold(pick_upper, thing)
+    def can_perform(cls, thing, mover):
+        return can_hold(mover, thing)
 
     @classmethod
-    def perform(self, thing, pick_upper):
-        pick_upper.tell("You pick up %s" % thing.name)
-        pick_upper.get_property(Inventory).add_thing(thing)
-
-
-class DropAction(Action):
-    @classmethod
-    def describe(cls, thing):
-        return "Drop %s" % thing.name
+    def perform(cls, thing, mover):
+        cls.prompt_for_places(thing, mover)
 
     @classmethod
-    def can_perform(cls, thing, dropper):
-        return thing.location in dropper.locations
-
-    @classmethod
-    def perform(cls, thing, dropper):
-        cls.prompt_for_places(thing, dropper)
-
-    @classmethod
-    def prompt_for_places(cls, thing, dropper):
+    def prompt_for_places(cls, thing, mover):
         print "Where do you want to put it?"
-        places = cls.places_to_put(thing, dropper) + ['ground']
+        places = cls.places_to_put(thing, mover) + ['ground']
         exit = number_prompt(places, 'Where do you want to put it?', lambda x: x.description if x != 'ground' else 'On the ground')
         if exit:
             if exit == 'ground':
-                dropper.tell("You drop %s" % thing.name)
-                dropper.location.add_thing(thing)
+                mover.tell("You drop %s" % thing.name)
+                mover.location.add_thing(thing)
             else:
-                dropper.tell("You put %s %s" % (thing.name, exit.description))
+                mover.tell("You put %s %s" % (thing.name, exit.description))
                 exit.to_location.add_thing(thing)
 
     @classmethod
-    def places_to_put(cls, thing, dropper):
+    def places_to_put(cls, thing, mover):
         """ Allow putting on the ground and inside of things (containers) """
         output = []
-        for thing2 in dropper.location.things:
+        for thing2 in mover.location.things:
             for entrance in entrances_to_thing(thing2):
                 if entrance.can_traverse(thing) and entrance.to_location.can_contain(thing):
                     output.append(entrance)
@@ -85,6 +70,30 @@ class TakeFromAction(Action):
             taker.get_property(Inventory).add_thing(target)
         else:
             pass
+
+
+class EmptyAction(Action):
+    prereq = IsContainer
+
+    @classmethod
+    def describe(cls, thing):
+        return "Empty the contents of %s" % thing.name
+
+    @classmethod
+    def can_perform(cls, thing, emptier):
+        return can_hold(emptier, thing)
+
+    @classmethod
+    def perform(cls, thing, emptier):
+        places = get_accessible_locations(emptier) + ['floor']
+        print "Empty where?"
+        choice = number_prompt(places, '>', lambda x: x.name if x != 'floor' else 'Onto the floor')
+        if choice:
+            if choice == 'floor':
+                choice = emptier.location
+            print "You empty the contents of %s %s" % (thing.name, choice.name)
+            for thing in thing.get_property(IsContainer).get_all_things():
+                choice.add_thing(thing)
 
 
 class EatAction(Action):
@@ -122,15 +131,35 @@ class GrindWithPestleAction(Action):
         if choice:
             # Grind it
             grinder.tell("You grind %s into a powder." % choice.name)
-            choice.name = 'some powdered %s' % choice.name
             for prop in choice.get_properties_of_types(['mechanical']):
                 choice.unbecome(prop.__class__, force=True)
             # Powder properties TODO: abstract these somewhere?
-            choice.become(Holdable)
             choice.become(Dissolvable)
+            choice.name = 'some powdered %s' % choice.name
 
     @classmethod
     def get_applicable_objects(cls, thing, grinder):
         return [
             t for t in get_accessible_things(grinder) if t.size <= thing.size
         ]
+
+
+class OpenCloseAction(Action):
+    prereq = Openable
+
+    @classmethod
+    def describe(cls, thing):
+        return 'Close %s' % thing.name if thing.is_property(Open) else 'Open %s' % thing.name
+
+    @classmethod
+    def can_perform(cls, thing, opener):
+        return True
+
+    @classmethod
+    def perform(cls, thing, opener):
+        if thing.is_property(Open):
+            opener.tell("You close %s" % thing.name)
+            thing.unbecome(Open)
+        else:
+            opener.tell("You open %s" % thing.name)
+            thing.become(Open)

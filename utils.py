@@ -11,3 +11,7 @@ def number_prompt(options, prompt, str_func):
             return options[int(value) - 1]
         except (ValueError, IndexError):
             print "Invalid choice. Choose 1-%d or 'q'" % len(options)
+
+
+def flatten_array(ary):
+    return [item for sublist in ary for item in sublist]

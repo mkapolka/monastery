@@ -6,6 +6,11 @@ class Boiling(Property):
     description = 'is boiling'
 
 
+class Boilable(Property):
+    types = ["physical"]
+    description = 'can be boiled'
+
+
 class Burning(Property):
     types = []
     description = 'is burning'
@@ -44,6 +49,11 @@ class Hot(Property):
 class Immobile(Property):
     types = []
     description = 'cannot be moved'
+
+
+class Liquid(Property):
+    types = ['mechanical']
+    description = 'is liquid'
 
 
 class MortarShaped(Property):

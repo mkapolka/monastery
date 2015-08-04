@@ -4,7 +4,8 @@ from form import Form
 from properties.forms import Human
 from properties.location_properties import IsContainer, Inventory, HasStomach
 from properties.materials import Metal, Wood, Stone, Flesh
-from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped
+from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped, Openable
+import properties as p
 from thing import Thing
 
 
@@ -62,7 +63,7 @@ class Apple(Template):
 
 class Barrel(Template):
     name = "A barrel"
-    properties = [IsContainer]
+    properties = [IsContainer, Openable]
     size = Thing.Size.medium
     material = Wood
 
@@ -106,10 +107,18 @@ class Player(Template):
 class Teapot(Template):
     name = "A teapot"
     size = Thing.Size.small
-    properties = [IsContainer, TeapotShaped]
+    properties = [IsContainer, TeapotShaped, p.Open]
     form = None
     material = Metal
 
-    reactions = [
-        # make_reaction("tick", None)
-    ]
+    contents = {
+        IsContainer: [
+            lazy('Water')
+        ]
+    }
+
+
+class Water(Template):
+    name = "some water"
+    size = Thing.Size.small
+    properties = [p.Liquid, p.Boilable]

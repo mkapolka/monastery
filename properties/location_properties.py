@@ -1,7 +1,9 @@
 import itertools
 
 from property import Property
+from properties import Open
 from location import PropertyLocation, StaticExit, OutsideExit, EntranceExit
+from utils import flatten_array
 
 
 def get_location_properties(thing):
@@ -34,9 +36,17 @@ def is_location_accessible(location, for_whom):
     return True
 
 
+def get_accessible_locations(thing):
+    things = thing.location.things
+    entrances = flatten_array([entrances_to_thing(t) for t in things])
+    return [thing.location] + [
+        e.to_location for e in entrances if e.can_access(thing)
+    ]
+
+
 def get_accessible_things(thing):
-    return itertools.chain(thing.location.things, *[
-        get_all_contents(t) for t in thing.location.things
+    return itertools.chain(*[
+        l.things for l in get_accessible_locations(thing)
     ])
 
 
@@ -54,8 +64,9 @@ class LocationProperty(Property):
             for exit in loc['exits']:
                 location_key = exit['to']
                 location = self.locations[key]
+                requires = exit.get('requires', None)
                 if location_key == 'outside':
-                    exit_instance = OutsideExit(location, self.thing)
+                    exit_instance = OutsideExit(location, self.thing, requires)
                 else:
                     exit_instance = StaticExit(location, self.locations[location_key])
                 if 'where' in exit:
@@ -64,7 +75,8 @@ class LocationProperty(Property):
 
         if hasattr(self, 'entrances_template'):
             for entrance in self.entrances_template:
-                entrance_exit = EntranceExit(thing, self.locations[entrance['to']])
+                requires = entrance.get('requires', None)
+                entrance_exit = EntranceExit(thing, self.locations[entrance['to']], requires)
                 if 'description' in entrance:
                     entrance_exit.description_template = entrance['description']
                 self.entrances.append(entrance_exit)
@@ -79,24 +91,40 @@ class LocationProperty(Property):
     def get_all_things(self):
         return itertools.chain(*[location.things for location in self.locations.values()])
 
+    def destroy(self):
+        self.thing.location.tell("The contents of %s tumble out" % self.thing.name)
+        for thing in self.get_all_things():
+            self.thing.location.add_thing(thing)
+
 
 class IsContainer(LocationProperty):
+    types = ['mechanical']
+
     locations_template = {
         'contents': {
             'name': 'Inside %(thing_name)s',
-            'exits': [{'to': 'outside', 'description': 'Out to %(to_location)s'}]
+            'exits': [
+                {
+                    'to': 'outside',
+                    'description': 'Out to %(to_location)s',
+                    'requires': [Open]
+                }
+            ]
         }
     }
 
     entrances_template = [
         {
             'to': 'contents',
-            'description': 'Into %(thing)s'
+            'description': 'Into %(thing)s',
+            'requires': [Open]
         }
     ]
 
 
 class HasStomach(LocationProperty):
+    types = ['mechanical']
+
     locations_template = {
         'contents': {
             'name': "Inside %(thing_name)s's stomach",
@@ -108,7 +136,14 @@ class HasStomach(LocationProperty):
 class Inventory(LocationProperty):
     locations_template = {
         'inventory': {
-            'name': "Inside %(thing_name)s's inventory",
+            'name': "Inside %(thing_name)s's backpack",
             'exits': [{'to': 'outside', 'description': 'Out'}]
         }
     }
+
+    entrances_template = [
+        {
+            'to': 'inventory',
+            'description': "Into %(thing)s's backpack"
+        }
+    ]

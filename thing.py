@@ -1,6 +1,16 @@
 from properties.location_properties import LocationProperty
 
 
+def destroy_thing(thing):
+    thing.destroyed = True
+    for prop in thing.properties.values():
+        prop.destroy()
+    thing.properties = {}
+    thing.form = None
+    thing.material = None
+    thing.location.__remove_thing(thing)
+
+
 class Thing(object):
     class Size(object):
         non_physical = -1000
@@ -27,6 +37,7 @@ class Thing(object):
         self.material = None
         self.size = Thing.Size.medium
         self.is_player = False
+        self.destroyed = False
 
     def __repr__(self):
         return '<Thing:%s>' % self.name
@@ -52,6 +63,7 @@ class Thing(object):
 
     def __remove_property(self, property):
         del self.properties[str(property.__class__)]
+        property.destroy()
         property.thing = None
 
     def set_meta_property(self, meta_property_name, meta_property):
