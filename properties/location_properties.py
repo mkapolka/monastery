@@ -1,9 +1,18 @@
 import itertools
 
+from enums import Size
 from property import Property
 from properties import Open
 from location import PropertyLocation, StaticExit, OutsideExit, EntranceExit
 from utils import flatten_array
+
+
+def are_touching(thing, other_thing):
+    if thing.location != other_thing.location:
+        return False
+
+    if thing.location.size == Size.room:
+        return False
 
 
 def get_location_properties(thing):
@@ -150,7 +159,12 @@ class HasStomach(LocationProperty):
     locations_template = {
         'contents': {
             'name': "Inside %(thing_name)s's stomach",
-            'exits': [{'to': 'outside', 'description': "Through %(thing)s's esophagus"}]
+            'exits': [
+                {
+                    'to': 'outside',
+                    'description': "Through %(thing)s's esophagus"
+                }
+            ]
         }
     }
 
