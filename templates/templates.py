@@ -83,18 +83,18 @@ class Cat(Template):
     size = Thing.Size.dog
 
 
-class Firepit(Template):
-    name = "A fire pit"
-    properties = [IsContainer, Hot]
-    form = None
-    material = None
-
-
 class Mortar(Template):
     name = "A mortar & pestle"
     properties = [MortarShaped]
     size = Thing.Size.small
     material = Stone
+
+
+class Oven(Template):
+    name = "An oven"
+    properties = [IsContainer, Hot, p.Open]
+    material = Metal
+    size = Thing.Size.stool
 
 
 class Player(Template):

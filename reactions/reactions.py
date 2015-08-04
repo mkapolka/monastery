@@ -1,6 +1,8 @@
-from reaction import Reaction, enqueue_event, Event
-from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped, Boiling, Hot
 from properties.location_properties import HasStomach, get_all_contents
+from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped, Boiling, Hot
+from reaction import Reaction, enqueue_event, Event
+import properties as p
+from thing import Thing, destroy_thing
 
 
 class AlightWhenBurned(Reaction):
@@ -10,6 +12,31 @@ class AlightWhenBurned(Reaction):
     @classmethod
     def perform(cls, event):
         event.target.become(Burning)
+
+
+class BoilBoilable(Reaction):
+    predicates = [p.Boilable, Hot]
+    anti_predicates = [Boiling]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        event.target.tell_room("%s starts boiling!" % event.target.name)
+        event.target.become(Boiling)
+
+
+class BoilOff(Reaction):
+    predicates = [Boiling]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        if event.target.size > Thing.Size.tiny:
+            event.target.tell_room("Some of %s boils away" % event.target.name)
+            event.target.size -= 1
+        else:
+            event.target.tell_room("%s boils away to nothing..." % event.target.name)
+            destroy_thing(event.target)
 
 
 class BurnNearby(Reaction):

@@ -8,7 +8,7 @@ def destroy_thing(thing):
     thing.properties = {}
     thing.form = None
     thing.material = None
-    thing.location.__remove_thing(thing)
+    thing.location.remove_thing(thing)
 
 
 class Thing(object):
@@ -22,6 +22,7 @@ class Thing(object):
         person = 5  # The size of a human
         armoire = 6
 
+        tiny = seed
         small = teapot
         medium = person
         large = armoire
