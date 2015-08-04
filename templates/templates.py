@@ -3,6 +3,7 @@ import sys
 from form import Form
 from properties.forms import Human
 from properties.location_properties import IsContainer, Inventory, HasStomach
+import properties.location_properties as lp
 from properties.materials import Metal, Wood, Stone, Flesh
 from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped, Openable
 import properties as p
@@ -117,6 +118,18 @@ class Teapot(Template):
         ]
     }
 
+
+class Table(Template):
+    name = "a table"
+    size = Thing.Size.stool
+    properties = [lp.Surface]
+    material = Wood
+
+    contents = {
+        lp.Surface: [
+            Teapot
+        ]
+    }
 
 class Water(Template):
     name = "some water"

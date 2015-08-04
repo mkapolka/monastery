@@ -121,6 +121,28 @@ class IsContainer(LocationProperty):
         }
     ]
 
+class Surface(LocationProperty):
+    types = ['mechanical']
+
+    locations_template = {
+        'top': {
+            'name': 'Atop %(thing_name)s',
+            'exits': [
+                {
+                    'to': 'outside',
+                    'description': 'Off of %(thing_name)s',
+                }
+            ]
+        }
+    }
+
+    entrances_template = [
+        {
+            'to': 'top',
+            'description': 'Onto %(thing)s'
+        }
+    ]
+
 
 class HasStomach(LocationProperty):
     types = ['mechanical']
