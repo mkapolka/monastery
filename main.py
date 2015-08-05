@@ -15,6 +15,44 @@ world = World()
 world.locations['monastery_kitchen'].add_thing(player)
 
 
+def action_prompt_v1():
+    def describe_to_player(action_tuple):
+        thing, action = action_tuple
+        if thing.location == player.location:
+            return action.describe(thing)
+        else:
+            return "%s (%s)" % (action.describe(thing), thing.location.name)
+
+    actions = []
+    for thing in get_accessible_things(player):
+        for action in actions_for_thing(thing):
+            if action.can_perform(thing, player):
+                actions.append((thing, action))
+
+    which_action = number_prompt(actions, "Do what?", describe_to_player)
+    if which_action:
+        thing, action = which_action
+        action.perform(thing, player)
+
+
+def action_prompt_v2():
+    def describe_to_player(thing):
+        if thing.location == player.location:
+            return thing.name
+        else:
+            return "%s (%s)" % (thing.name, thing.location.name)
+
+    things = [t for t in get_accessible_things(player) if actions_for_thing(t)]
+    print "Use what?"
+    which_thing = number_prompt(things, ">", describe_to_player)
+    if which_thing:
+        actions = [a for a in actions_for_thing(which_thing) if a.can_perform(which_thing, player)]
+        print "Do what?"
+        which_action = number_prompt(actions, ">", lambda x: x.describe(which_thing))
+        if which_action:
+            which_action.perform(which_thing, player)
+
+
 def examine_thing(thing):
     print thing.name
     print "=" * len(thing.name)
@@ -88,23 +126,8 @@ def iterate():
             which_exit.to_location.add_thing(player)
             describe_location(player.location)
     elif action == 'd':
-        actions = []
-        for thing in get_accessible_things(player):
-            for action in actions_for_thing(thing):
-                if action.can_perform(thing, player):
-                    actions.append((thing, action))
-
-        def describe_to_player(action_tuple):
-            thing, action = action_tuple
-            if thing.location == player.location:
-                return action.describe(thing)
-            else:
-                return "%s (%s)" % (action.describe(thing), thing.location.name)
-
-        which_action = number_prompt(actions, "Do what?", describe_to_player)
-        if which_action:
-            thing, action = which_action
-            action.perform(thing, player)
+        # action_prompt_v1()
+        action_prompt_v2()
     elif action == 'e':
         print 'Examine what?'
         accessible_things = [t for t in get_accessible_things(player)]

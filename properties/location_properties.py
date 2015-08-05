@@ -92,7 +92,10 @@ class LocationProperty(Property):
         return itertools.chain(*[location.things for location in self.locations.values()])
 
     def destroy(self):
-        self.thing.location.tell("The contents of %s tumble out" % self.thing.name)
+        names = map(lambda x: x.name, self.get_all_things())
+        if len(names) > 1:
+            names[-1] = "and %s" % names[-1]
+        self.thing.location.tell("%s tumble%s out of %s" % (", ".join(names), '' if len(names) > 1 else 's', self.thing.name))
         for thing in self.get_all_things():
             self.thing.location.add_thing(thing)
 
