@@ -5,11 +5,11 @@ from actions import actions_for_thing
 from enums import Size
 from properties.location_properties import Inventory, get_accessible_things, get_all_locations
 from reaction import process_event_queue, process_tick_events
-from templates.templates import Player
+from templates.templates import Player, instantiate_template
 from utils import number_prompt
 from world import World
 
-player = Player.instantiate()
+player = instantiate_template(Player)
 player.is_player = True
 world = World()
 world.locations['monastery_kitchen'].add_thing(player)

@@ -1,14 +1,14 @@
 import itertools
 
 from location import Location, StaticExit
-from templates.templates import Oven, Barrel, Mortar, Cat
+from templates.templates import Oven, Barrel, Mortar, Cat, instantiate_template
 import templates as t
 
 places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
         "exits": ["monastery_kitchen"],
-        "things": [Cat]
+        "things": [Cat, t.CustomTemplate(t.Barrel, name='an armoire')]
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
@@ -24,7 +24,7 @@ def make_locations(places):
         output[key] = Location()
         output[key].name = value['name']
         for thing_class in value.get('things', []):
-            output[key].add_thing(thing_class.instantiate())
+            output[key].add_thing(instantiate_template(thing_class))
 
     for key, value in places.items():
         for exit_id in value['exits']:

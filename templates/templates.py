@@ -15,12 +15,27 @@ class LazyTemplate(object):
     def __init__(self, template_name):
         self.template_name = template_name
 
-    def instantiate(self):
-        return getattr(sys.modules[__name__], self.template_name).instantiate()
+    def __getattr__(self, key):
+        return getattr(getattr(sys.modules[__name__], self.template_name), key)
 
 
 def lazy(template_name):
     return LazyTemplate(template_name)
+
+
+def instantiate_template(template):
+    thing = Thing()
+    thing.name = template.name
+    thing.set_form(template.form)
+    thing.set_material(template.material)
+    thing.size = template.size
+    for prop in template.properties:
+        thing.become(prop)
+    if hasattr(template, 'contents'):
+        for prop, contents in template.contents.items():
+            for template in contents:
+                thing.get_property(prop).add_thing(instantiate_template(template))
+    return thing
 
 
 class Template(object):
@@ -28,22 +43,16 @@ class Template(object):
     form = None
     material = None
 
-    @classmethod
-    def instantiate(cls):
-        thing = Thing()
-        thing.name = cls.name
-        thing.set_form(cls.form)
-        thing.set_material(cls.material)
-        thing.size = cls.size
-        for prop in cls.properties:
-            thing.become(prop)
+class CustomTemplate(Template):
+    def __init__(self, base, **kwargs):
+        self.base = base
+        self.custom_fields = kwargs
 
-        if hasattr(cls, 'contents'):
-            for prop, contents in cls.contents.items():
-                for template in contents:
-                    thing.get_property(prop).add_thing(template.instantiate())
-
-        return thing
+    def __getattr__(self, key):
+        if key in self.custom_fields:
+            return self.custom_fields[key]
+        else:
+            return getattr(self.base, key)
 
 
 class FormTemplate(Template):
@@ -136,6 +145,7 @@ class Table(Template):
             Teapot
         ]
     }
+
 
 class Water(Template):
     name = "some water"
