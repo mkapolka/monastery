@@ -2,14 +2,14 @@ import sys
 import logging
 
 from actions import actions_for_thing
-from properties.location_properties import Inventory, get_accessible_things
+from enums import Size
+from properties.location_properties import Inventory, get_accessible_things, get_all_locations
 from reaction import process_event_queue, process_tick_events
-from templates.templates import Player
-from thing import Thing
+from templates.templates import Player, instantiate_template
 from utils import number_prompt
 from world import World
 
-player = Player.instantiate()
+player = instantiate_template(Player)
 player.is_player = True
 world = World()
 world.locations['monastery_kitchen'].add_thing(player)
@@ -58,23 +58,29 @@ def examine_thing(thing):
     print "=" * len(thing.name)
     print ''
     print '%s...' % thing.name
+    for location in get_all_locations(thing):
+        if location.things:
+            print '  %s you find...' % location.name
+            for thing in location.things:
+                print '    %s' % thing.name
     for prop in thing.properties.values():
         if prop.description:
             print '  %s' % prop.description
     # print size
     sizes = {
-        Thing.Size.seed: 'about the size of a seed',
-        Thing.Size.apple: 'about the size of an apple',
-        Thing.Size.teapot: 'about the size of an teapot',
-        Thing.Size.dog: 'about the size of a dog',
-        Thing.Size.stool: 'about the size of a stool',
-        Thing.Size.person: 'about the size of a person',
-        Thing.Size.armoire: 'about the size of a armoire',
+        Size.seed: 'about the size of a seed',
+        Size.apple: 'about the size of an apple',
+        Size.teapot: 'about the size of an teapot',
+        Size.dog: 'about the size of a dog',
+        Size.stool: 'about the size of a stool',
+        Size.person: 'about the size of a person',
+        Size.armoire: 'about the size of a armoire',
     }
     if thing.size in sizes.keys():
         print '  is %s' % sizes[thing.size]
     if thing.material is not None and thing.material.name:
         print '  is made of %s' % thing.material.name
+
     print ''
 
 

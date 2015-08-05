@@ -1,47 +1,58 @@
 import sys
 
+from enums import Size
 from form import Form
 from properties.forms import Human
 from properties.location_properties import IsContainer, Inventory, HasStomach
 from properties.materials import Metal, Wood, Stone, Flesh
 from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped, Openable
-import properties as p
 from thing import Thing
+import properties as p
+import properties.location_properties as lp
 
 
 class LazyTemplate(object):
     def __init__(self, template_name):
         self.template_name = template_name
 
-    def instantiate(self):
-        return getattr(sys.modules[__name__], self.template_name).instantiate()
+    def __getattr__(self, key):
+        return getattr(getattr(sys.modules[__name__], self.template_name), key)
 
 
 def lazy(template_name):
     return LazyTemplate(template_name)
 
 
+def instantiate_template(template):
+    thing = Thing()
+    thing.name = template.name
+    thing.set_form(template.form)
+    thing.set_material(template.material)
+    thing.size = template.size
+    for prop in template.properties:
+        thing.become(prop)
+    if hasattr(template, 'contents'):
+        for prop, contents in template.contents.items():
+            for template in contents:
+                thing.get_property(prop).add_thing(instantiate_template(template))
+    return thing
+
+
 class Template(object):
-    size = Thing.Size.medium
+    size = Size.medium
     form = None
     material = None
 
-    @classmethod
-    def instantiate(cls):
-        thing = Thing()
-        thing.name = cls.name
-        thing.set_form(cls.form)
-        thing.set_material(cls.material)
-        thing.size = cls.size
-        for prop in cls.properties:
-            thing.become(prop)
+class CustomTemplate(Template):
+    def __init__(self, base, **kwargs):
+        self.base = base
+        self.custom_fields = kwargs
 
-        if hasattr(cls, 'contents'):
-            for prop, contents in cls.contents.items():
-                for template in contents:
-                    thing.get_property(prop).add_thing(template.instantiate())
-
-        return thing
+    def __getattr__(self, key):
+        if key in self.custom_fields:
+            return self.custom_fields[key]
+        else:
+            return getattr(self.base, key)
 
 
 class FormTemplate(Template):
@@ -58,13 +69,13 @@ class FormTemplate(Template):
 class Apple(Template):
     name = "an apple"
     properties = [Edible, ShrinkOnEat]
-    size = Thing.Size.apple
+    size = Size.apple
 
 
 class Barrel(Template):
     name = "A barrel"
     properties = [IsContainer, Openable]
-    size = Thing.Size.medium
+    size = Size.medium
     material = Wood
 
     contents = {
@@ -80,13 +91,18 @@ class Cat(Template):
     name = "A dozy cat"
     properties = [HasStomach]
     material = Flesh
-    size = Thing.Size.dog
+    size = Size.dog
+    contents = {
+        HasStomach: [
+            Apple
+        ]
+    }
 
 
 class Mortar(Template):
     name = "A mortar & pestle"
     properties = [MortarShaped]
-    size = Thing.Size.small
+    size = Size.small
     material = Stone
 
 
@@ -94,7 +110,7 @@ class Oven(Template):
     name = "An oven"
     properties = [IsContainer, Hot, p.Open]
     material = Metal
-    size = Thing.Size.stool
+    size = Size.stool
 
 
 class Player(Template):
@@ -106,7 +122,7 @@ class Player(Template):
 
 class Teapot(Template):
     name = "A teapot"
-    size = Thing.Size.small
+    size = Size.small
     properties = [IsContainer, TeapotShaped, p.Open]
     form = None
     material = Metal
@@ -118,7 +134,20 @@ class Teapot(Template):
     }
 
 
+class Table(Template):
+    name = "a table"
+    size = Size.stool
+    properties = [lp.Surface]
+    material = Wood
+
+    contents = {
+        lp.Surface: [
+            Teapot
+        ]
+    }
+
+
 class Water(Template):
     name = "some water"
-    size = Thing.Size.small
+    size = Size.small
     properties = [p.Liquid, p.Boilable]

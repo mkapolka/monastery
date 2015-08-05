@@ -15,3 +15,14 @@ def number_prompt(options, prompt, str_func):
 
 def flatten_array(ary):
     return [item for sublist in ary for item in sublist]
+
+
+def sentence(ary):
+    """ Pass an array of strings """
+    if len(ary) > 1:
+        ary[-1] = "and %s" % ary[-1]
+
+    if len(ary) > 2:
+        return ", ".join(ary)
+    else:
+        return " ".join(ary)

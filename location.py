@@ -1,12 +1,19 @@
+from enums import Size
+
 class Location(object):
     def __init__(self):
         self.things = []
         self._name = 'Nowhere in particular'
         # Static exits for rooms
         self.exits = []
+        self._size = Size.room
 
     def __repr__(self):
         return '<Location:"%s">' % self.name
+
+    @property
+    def size(self):
+        return self._size
 
     def can_contain(self, thing):
         return True
@@ -55,7 +62,11 @@ class PropertyLocation(Location):
         self.prop = prop
 
     def can_contain(self, thing):
-        return thing.size <= self.thing.size and thing != self.thing
+        return thing.size <= self.size and thing != self.thing
+
+    @property
+    def size(self):
+        return self.thing.size
 
     @property
     def thing(self):
