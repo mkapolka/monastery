@@ -1,5 +1,4 @@
 import sys
-import logging
 import curses
 
 from actions import actions_for_thing, CantMoveException, move_thing, can_hold
@@ -61,32 +60,38 @@ def action_prompt_v2():
 
 def move_prompt():
     things = [t for t in get_accessible_things(player)]
-    print "Move what?"
-    thing_to_move = number_prompt(things, '>', lambda x: x.name)
+    ui.message("Move what?")
+    thing_to_move = letter_prompt(things, '>', lambda x: x.name)
     if thing_to_move:
         if not can_hold(player, thing_to_move):
-            print "You can't hold that!"
+            ui.message("You can't hold that!")
             return
         places = []
         for thing2 in player.location.things:
             for entrance in entrances_to_thing(thing2):
                 places.append(entrance)
-        print "Move where?"
-        target_location = number_prompt(places, '>', lambda x: x.description)
+        places.append('ground')
+        ui.message("Move where?")
+        target_location = letter_prompt(places, '>', lambda x: x.description if x != 'ground' else 'Onto the ground')
         if target_location:
+            if target_location == 'ground':
+                ui.message("You put %s on the floor" % thing_to_move.name)
+                player.location.add_thing(thing_to_move)
+                return
+
             try:
                 move_thing(player, thing_to_move, target_location)
             except CantMoveException as e:
                 if e.reason == CantMoveException.TooBig:
-                    print "%s won't fit %s!" % (thing_to_move.name, target_location.description)
+                    ui.message("%s won't fit %s!" % (thing_to_move.name, target_location.description))
                     return
                 if e.reason == CantMoveException.CantTraverse:
-                    print "%s can't go %s..." % (thing_to_move.name, target_location.description)
+                    ui.message("%s can't go %s..." % (thing_to_move.name, target_location.description))
                     return
                 if e.reason == CantMoveException.CantContain:
-                    print "%s can't contain %s." % (target_location.description, thing_to_move.name)
+                    ui.message("%s can't contain %s." % (target_location.description, thing_to_move.name))
                     return
-                print "Can't move %s to %s" % (thing_to_move.name, target_location.description)
+                ui.message("Can't move %s to %s" % (thing_to_move.name, target_location.description))
 
 
 def examine_thing(thing):
@@ -151,7 +156,7 @@ def tick_world():
 
 
 def iterate():
-    ui.message("[g]o somewhere? [d]o something? [l]ook around? [e]xamine something? [w]ait? [i]nventory?")
+    ui.message("[g]o somewhere? [d]o something? [l]ook around? [e]xamine something? [w]ait? [i]nventory? [m]ove something?")
     action = ui.get_char()
     ui.message('------')
     if action == 'g':

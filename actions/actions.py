@@ -1,7 +1,7 @@
 from action import Action
 from location import PropertyLocation
-from properties import Immobile, Inventory, IsContainer, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
-from properties.location_properties import entrances_to_thing, get_all_contents, get_accessible_things, get_accessible_locations
+from properties import Immobile, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
+from properties.location_properties import get_accessible_things
 from utils import letter_prompt
 import ui
 
@@ -51,38 +51,12 @@ class DrinkAction(Action):
 
     @classmethod
     def can_perform(cls, thing, drinker):
-        return any(map(lambda x: x.is_property(Liquid), thing.get_property(IsContainer).get_all_things()))
+        return True
 
     @classmethod
     def perform(cls, thing, drinker):
-        drinker.tell("You drink from %s" % thing.name)
-        liquid_things = [t for t in thing.get_property(IsContainer).get_all_things() if t.is_property(Liquid)]
-        for liquid_thing in liquid_things:
-            drinker.get_property(HasStomach).add_thing(liquid_thing)
-
-
-class EmptyAction(Action):
-    prereq = IsContainer
-
-    @classmethod
-    def describe(cls, thing):
-        return "Empty the contents of %s" % thing.name
-
-    @classmethod
-    def can_perform(cls, thing, emptier):
-        return can_hold(emptier, thing)
-
-    @classmethod
-    def perform(cls, thing, emptier):
-        places = get_accessible_locations(emptier) + ['floor']
-        ui.message("Empty where?")
-        choice = letter_prompt(places, '>', lambda x: x.name if x != 'floor' else 'Onto the floor')
-        if choice:
-            if choice == 'floor':
-                choice = emptier.location
-            ui.message("You empty the contents of %s %s" % (thing.name, choice.name))
-            for thing in thing.get_property(IsContainer).get_all_things():
-                choice.add_thing(thing)
+        drinker.tell("You drink %s" % thing.name)
+        drinker.get_property(HasStomach).add_thing(thing)
 
 
 class EatAction(Action):
@@ -133,45 +107,6 @@ class GrindWithPestleAction(Action):
         ]
 
 
-class MoveAction(Action):
-    prereq = 'asdf'
-
-    @classmethod
-    def describe(cls, thing):
-        return "Move %s" % thing.name
-
-    @classmethod
-    def can_perform(cls, thing, mover):
-        return can_hold(mover, thing)
-
-    @classmethod
-    def perform(cls, thing, mover):
-        cls.prompt_for_places(thing, mover)
-
-    @classmethod
-    def prompt_for_places(cls, thing, mover):
-        ui.message("Where do you want to put it?")
-        places = cls.places_to_put(thing, mover) + ['ground']
-        exit = letter_prompt(places, 'Where do you want to put it?', lambda x: x.description if x != 'ground' else 'On the ground')
-        if exit:
-            if exit == 'ground':
-                mover.tell("You drop %s" % thing.name)
-                mover.location.add_thing(thing)
-            else:
-                mover.tell("You put %s %s" % (thing.name, exit.description))
-                exit.to_location.add_thing(thing)
-
-    @classmethod
-    def places_to_put(cls, thing, mover):
-        """ Allow putting on the ground and inside of things (containers) """
-        output = []
-        for thing2 in mover.location.things:
-            for entrance in entrances_to_thing(thing2):
-                if entrance.can_traverse(thing) and entrance.to_location.can_contain(thing):
-                    output.append(entrance)
-        return output
-
-
 class OpenCloseAction(Action):
     prereq = Openable
 
@@ -193,26 +128,4 @@ class OpenCloseAction(Action):
             thing.become(Open)
 
 
-class TakeFromAction(Action):
-    prereq = IsContainer
 
-    @classmethod
-    def describe(cls, thing):
-        return "Take something from %s" % thing.name
-
-    @classmethod
-    def can_perform(cls, thing, taker):
-        return bool(TakeFromAction.grabable_things(thing, taker))
-
-    @classmethod
-    def grabable_things(cls, thing, taker):
-        return [t for t in get_all_contents(thing) if can_hold(taker, t)]
-
-    @classmethod
-    def perform(cls, thing, taker):
-        target = letter_prompt(TakeFromAction.grabable_things(thing, taker), "Take what?", lambda x: x.name)
-        if target:
-            taker.tell("You take %s from %s" % (target.name, thing.name))
-            taker.get_property(Inventory).add_thing(target)
-        else:
-            pass

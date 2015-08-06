@@ -8,9 +8,10 @@ def init(scr):
 
 
 def message(message):
+    stdscr.scroll()
+    height, width = stdscr.getmaxyx()
+    stdscr.move(height - 1, 0)
     stdscr.addstr(str(message))
-    y, x = stdscr.getyx()
-    stdscr.move(y + 1, 0)
 
 
 def get_char():
