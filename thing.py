@@ -1,5 +1,6 @@
 from enums import Size
 from properties.location_properties import LocationProperty
+import ui
 
 
 def destroy_thing(thing):
@@ -29,7 +30,7 @@ class Thing(object):
 
     def tell(self, message):
         if self.is_player:
-            print message
+            ui.message(message)
 
     def tell_room(self, message):
         for thing in self.location.things:
@@ -41,13 +42,13 @@ class Thing(object):
             prop.receive_message(message_type, *args, **kwargs)
 
     def __get_property(self, property_class):
-        return self.properties.get(str(property_class), None)
+        return self.properties.get(property_class.key, None)
 
     def __add_property(self, property):
-        self.properties[str(property.__class__)] = property
+        self.properties[property.key] = property
 
     def __remove_property(self, property):
-        del self.properties[str(property.__class__)]
+        del self.properties[property.key]
         property.destroy()
         property.thing = None
 
@@ -94,6 +95,19 @@ class Thing(object):
 
             if prop.count == 0:
                 self.__remove_property(prop)
+
+    def transfer_properties(self, from_thing, properties):
+        """ Transfers the properties into this thing. For i.e. when a powder dissolves into a liquid """
+        # Remove the properties from the old object
+        from_thing.properties = dict([
+            (k, v) for k, v in from_thing.properties.items()
+            if v not in properties
+        ])
+
+        for prop in properties:
+            if prop.key not in self.properties.keys():
+                self.properties[prop.key] = prop
+                prop.thing = self
 
     def get_properties_of_types(self, types):
         return [

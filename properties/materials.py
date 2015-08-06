@@ -1,21 +1,27 @@
-from properties import Hard, Flammable, Phlogiston
+import properties as p
 from material import Material
 
 
 class Metal(Material):
     name = 'metal'
-    properties = [Hard]
+    properties = [p.Hard]
 
 
 class Stone(Material):
     name = 'stone'
-    properties = [Hard]
+    properties = [p.Hard]
 
 
 class Wood(Material):
     name = 'wood'
-    properties = [Flammable, Phlogiston]
+    properties = [p.Flammable, p.Phlogiston]
 
 
 class Flesh(Material):
-    properties = [Flammable, Phlogiston]
+    name = 'flesh'
+    properties = [p.Flammable, p.Phlogiston]
+
+
+class Plant(Material):
+    name = 'plant matter'
+    properties = [p.Flammable, p.Phlogiston]

@@ -8,3 +8,7 @@ class Property(object):
 
     def destroy(self):
         pass
+
+    @classmethod
+    def key(cls):
+        return str(cls)

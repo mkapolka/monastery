@@ -4,7 +4,7 @@ from enums import Size
 from form import Form
 from properties.forms import Human
 from properties.location_properties import IsContainer, Inventory, HasStomach
-from properties.materials import Metal, Wood, Stone, Flesh
+import properties.materials as m
 from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped, Openable
 from thing import Thing
 import properties as p
@@ -43,6 +43,7 @@ class Template(object):
     form = None
     material = None
 
+
 class CustomTemplate(Template):
     def __init__(self, base, **kwargs):
         self.base = base
@@ -68,7 +69,7 @@ class FormTemplate(Template):
 
 class Apple(Template):
     name = "an apple"
-    properties = [Edible, ShrinkOnEat]
+    properties = [Edible]
     size = Size.apple
 
 
@@ -76,7 +77,7 @@ class Barrel(Template):
     name = "A barrel"
     properties = [IsContainer, Openable]
     size = Size.medium
-    material = Wood
+    material = m.Wood
 
     contents = {
         IsContainer: [
@@ -90,7 +91,7 @@ class Barrel(Template):
 class Cat(Template):
     name = "A dozy cat"
     properties = [HasStomach]
-    material = Flesh
+    material = m.Flesh
     size = Size.dog
     contents = {
         HasStomach: [
@@ -103,13 +104,13 @@ class Mortar(Template):
     name = "A mortar & pestle"
     properties = [MortarShaped]
     size = Size.small
-    material = Stone
+    material = m.Stone
 
 
 class Oven(Template):
     name = "An oven"
     properties = [IsContainer, Hot, p.Open]
-    material = Metal
+    material = m.Metal
     size = Size.stool
 
 
@@ -117,7 +118,14 @@ class Player(Template):
     name = "The player"
     properties = [Inventory]
     form = Human
-    material = Flesh
+    material = m.Flesh
+
+
+class ShrinkyMushroom(Template):
+    name = "Spiteful fungi"
+    properties = [ShrinkOnEat]
+    material = m.Plant
+    size = Size.apple
 
 
 class Teapot(Template):
@@ -125,7 +133,7 @@ class Teapot(Template):
     size = Size.small
     properties = [IsContainer, TeapotShaped, p.Open]
     form = None
-    material = Metal
+    material = m.Metal
 
     contents = {
         IsContainer: [
@@ -138,7 +146,7 @@ class Table(Template):
     name = "a table"
     size = Size.stool
     properties = [lp.Surface]
-    material = Wood
+    material = m.Wood
 
     contents = {
         lp.Surface: [

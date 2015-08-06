@@ -12,8 +12,13 @@ places = {
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
-        "exits": ["monastery_garden"],
+        "exits": ["monastery_garden", "monastery_bathroom"],
         "things": [Oven, t.Teapot, Barrel, Mortar]
+    },
+    "monastery_bathroom": {
+        "name": "The Tonsured Privy",
+        "exits": ["monastery_kitchen"],
+        "things": [t.ShrinkyMushroom]
     }
 }
 

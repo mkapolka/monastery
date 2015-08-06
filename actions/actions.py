@@ -1,7 +1,8 @@
 from action import Action
 from properties import Immobile, Inventory, IsContainer, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
 from properties.location_properties import entrances_to_thing, get_all_contents, get_accessible_things, get_accessible_locations
-from utils import number_prompt
+import ui
+from utils import letter_prompt
 
 
 def can_hold(holder, thing):
@@ -10,21 +11,23 @@ def can_hold(holder, thing):
         thing.size < holder.size
 
 
-class DrinkAction(Action):
-    prereq = Liquid
+class DrinkContentsAction(Action):
+    prereq = IsContainer
 
     @classmethod
     def describe(cls, thing):
-        return "Drink %s" % thing.name
+        return "Drink from %s" % thing.name
 
     @classmethod
     def can_perform(cls, thing, drinker):
-        return True
+        return any(map(lambda x: x.is_property(Liquid), thing.get_property(IsContainer).get_all_things()))
 
     @classmethod
     def perform(cls, thing, drinker):
-        drinker.tell("You drink %s" % thing.name)
-        drinker.get_property(HasStomach).add_thing(thing)
+        drinker.tell("You drink from %s" % thing.name)
+        liquid_things = [t for t in thing.get_property(IsContainer).get_all_things() if t.is_property(Liquid)]
+        for liquid_thing in liquid_things:
+            drinker.get_property(HasStomach).add_thing(liquid_thing)
 
 
 class EmptyAction(Action):
@@ -41,12 +44,12 @@ class EmptyAction(Action):
     @classmethod
     def perform(cls, thing, emptier):
         places = get_accessible_locations(emptier) + ['floor']
-        print "Empty where?"
-        choice = number_prompt(places, '>', lambda x: x.name if x != 'floor' else 'Onto the floor')
+        ui.message("Empty where?")
+        choice = letter_prompt(places, '>', lambda x: x.name if x != 'floor' else 'Onto the floor')
         if choice:
             if choice == 'floor':
                 choice = emptier.location
-            print "You empty the contents of %s %s" % (thing.name, choice.name)
+            ui.message("You empty the contents of %s %s" % (thing.name, choice.name))
             for thing in thing.get_property(IsContainer).get_all_things():
                 choice.add_thing(thing)
 
@@ -81,8 +84,8 @@ class GrindWithPestleAction(Action):
 
     @classmethod
     def perform(cls, thing, grinder):
-        print "Grind what?"
-        choice = number_prompt(GrindWithPestleAction.get_applicable_objects(thing, grinder), '>', lambda x: x.name)
+        ui.message("Grind what?")
+        choice = letter_prompt(GrindWithPestleAction.get_applicable_objects(thing, grinder), '>', lambda x: x.name)
         if choice:
             # Grind it
             grinder.tell("You grind %s into a powder." % choice.name)
@@ -114,9 +117,9 @@ class MoveAction(Action):
 
     @classmethod
     def prompt_for_places(cls, thing, mover):
-        print "Where do you want to put it?"
+        ui.message("Where do you want to put it?")
         places = cls.places_to_put(thing, mover) + ['ground']
-        exit = number_prompt(places, 'Where do you want to put it?', lambda x: x.description if x != 'ground' else 'On the ground')
+        exit = letter_prompt(places, 'Where do you want to put it?', lambda x: x.description if x != 'ground' else 'On the ground')
         if exit:
             if exit == 'ground':
                 mover.tell("You drop %s" % thing.name)
@@ -174,10 +177,9 @@ class TakeFromAction(Action):
 
     @classmethod
     def perform(cls, thing, taker):
-        target = number_prompt(TakeFromAction.grabable_things(thing, taker), "Take what?", lambda x: x.name)
+        target = letter_prompt(TakeFromAction.grabable_things(thing, taker), "Take what?", lambda x: x.name)
         if target:
             taker.tell("You take %s from %s" % (target.name, thing.name))
             taker.get_property(Inventory).add_thing(target)
         else:
             pass
-

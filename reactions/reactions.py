@@ -72,8 +72,9 @@ class DissolveIntoLiquid(Reaction):
         if liquid_neighbors:
             into = liquid_neighbors[0]
             event.target.tell_room("%s dissolves into %s" % (event.target.name, into.name))
-            liquid_neighbors[0].become(*event.target.get_properties_of_types(['chemical']))
+            liquid_neighbors[0].transfer_properties(event.target, event.target.get_properties_of_types(['chemical']))
             destroy_thing(event.target)
+
 
 class ShrinkDigestible(Reaction):
     predicates = [ShrinkOnEat]
@@ -84,6 +85,7 @@ class ShrinkDigestible(Reaction):
         event.target.unbecome(ShrinkOnEat)
         # Get the owner of the stomach digesting this
         event.digester.tell("The world feels larger somehow...")
+        print 'OKAY I SAID IT'
         event.digester.size -= 1
 
 

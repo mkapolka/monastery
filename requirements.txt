@@ -1,0 +1,4 @@
+gnureadline==6.3.3
+ipython==3.2.1
+nltk==3.0.4
+wsgiref==0.1.2
