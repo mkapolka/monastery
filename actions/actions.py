@@ -1,18 +1,49 @@
 from action import Action
+from location import PropertyLocation
 from properties import Immobile, Inventory, IsContainer, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
 from properties.location_properties import entrances_to_thing, get_all_contents, get_accessible_things, get_accessible_locations
-import ui
 from utils import letter_prompt
+import ui
+
+
+class CantMoveException(Exception):
+    TooBig = 1
+    CantTraverse = 2
+    CantContain = 3
+    CantHold = 4
+
+    def __init__(self, reason):
+        super(CantMoveException, self).__init__()
+        self.reason = reason
+
+
+def _liquid_holdable(holder, thing):
+    if isinstance(thing.location, PropertyLocation):
+        return can_hold(holder, thing.location.thing)
 
 
 def can_hold(holder, thing):
     return not thing.is_property(Immobile) and \
-        not thing.is_property(Liquid) and \
+        (not thing.is_property(Liquid) or _liquid_holdable(holder, thing)) and \
         thing.size < holder.size
 
 
-class DrinkContentsAction(Action):
-    prereq = IsContainer
+def move_thing(mover, thing, entrance):
+    if not can_hold(mover, thing):
+        raise CantMoveException(CantMoveException.CantHold)
+    if not entrance.can_traverse(thing):
+        raise CantMoveException(CantMoveException.CantTraverse)
+    if not entrance.to_location.can_contain(thing):
+        if entrance.to_location.size < thing.size:
+            raise CantMoveException(CantMoveException.TooBig)
+        raise CantMoveException(CantMoveException.CantContain)
+    else:
+        mover.tell("You move %s %s" % (thing.name, entrance.description))
+        entrance.to_location.add_thing(thing)
+
+
+class DrinkAction(Action):
+    prereq = Liquid
 
     @classmethod
     def describe(cls, thing):
@@ -103,6 +134,8 @@ class GrindWithPestleAction(Action):
 
 
 class MoveAction(Action):
+    prereq = 'asdf'
+
     @classmethod
     def describe(cls, thing):
         return "Move %s" % thing.name

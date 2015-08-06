@@ -2,9 +2,9 @@ import sys
 import logging
 import curses
 
-from actions import actions_for_thing
+from actions import actions_for_thing, CantMoveException, move_thing, can_hold
 from enums import Size
-from properties.location_properties import Inventory, get_accessible_things, get_all_locations
+from properties.location_properties import Inventory, get_accessible_things, get_all_locations, entrances_to_thing
 from reaction import process_event_queue, process_tick_events
 from templates.templates import Player, instantiate_template
 import ui
@@ -57,6 +57,36 @@ def action_prompt_v2():
         which_action = letter_prompt(actions, ">", lambda x: x.describe(which_thing))
         if which_action:
             which_action.perform(which_thing, player)
+
+
+def move_prompt():
+    things = [t for t in get_accessible_things(player)]
+    print "Move what?"
+    thing_to_move = number_prompt(things, '>', lambda x: x.name)
+    if thing_to_move:
+        if not can_hold(player, thing_to_move):
+            print "You can't hold that!"
+            return
+        places = []
+        for thing2 in player.location.things:
+            for entrance in entrances_to_thing(thing2):
+                places.append(entrance)
+        print "Move where?"
+        target_location = number_prompt(places, '>', lambda x: x.description)
+        if target_location:
+            try:
+                move_thing(player, thing_to_move, target_location)
+            except CantMoveException as e:
+                if e.reason == CantMoveException.TooBig:
+                    print "%s won't fit %s!" % (thing_to_move.name, target_location.description)
+                    return
+                if e.reason == CantMoveException.CantTraverse:
+                    print "%s can't go %s..." % (thing_to_move.name, target_location.description)
+                    return
+                if e.reason == CantMoveException.CantContain:
+                    print "%s can't contain %s." % (target_location.description, thing_to_move.name)
+                    return
+                print "Can't move %s to %s" % (thing_to_move.name, target_location.description)
 
 
 def examine_thing(thing):
@@ -140,6 +170,8 @@ def iterate():
     elif action == 'd':
         # action_prompt_v1()
         action_prompt_v2()
+    elif action == 'm':
+        move_prompt()
     elif action == 'e':
         ui.message('Examine what?')
         accessible_things = [t for t in get_accessible_things(player)]
