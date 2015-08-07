@@ -48,20 +48,17 @@ def action_prompt_v2():
             return "%s (%s)" % (thing.name, thing.location.name)
 
     things = [t for t in get_accessible_things(player) if doable_actions_for_thing(t)]
-    ui.message("Use what?")
-    which_thing = letter_prompt(things, ">", describe_to_player)
+    which_thing = letter_prompt(things, "Use what?", describe_to_player)
     if which_thing:
         actions = [a for a in actions_for_thing(which_thing) if a.can_perform(which_thing, player)]
-        ui.message("Do what?")
-        which_action = letter_prompt(actions, ">", lambda x: x.describe(which_thing))
+        which_action = letter_prompt(actions, "Do what?", lambda x: x.describe(which_thing))
         if which_action:
             which_action.perform(which_thing, player)
 
 
 def move_prompt():
     things = [t for t in get_accessible_things(player)]
-    ui.message("Move what?")
-    thing_to_move = letter_prompt(things, '>', lambda x: x.name)
+    thing_to_move = letter_prompt(things, 'Move what?', lambda x: x.name)
     if thing_to_move:
         if not can_hold(player, thing_to_move):
             ui.message("You can't hold that!")
@@ -71,8 +68,7 @@ def move_prompt():
             for entrance in entrances_to_thing(thing2):
                 places.append(entrance)
         places.append('ground')
-        ui.message("Move where?")
-        target_location = letter_prompt(places, '>', lambda x: x.description if x != 'ground' else 'Onto the ground')
+        target_location = letter_prompt(places, 'Move where?', lambda x: x.description if x != 'ground' else 'Onto the ground')
         if target_location:
             if target_location == 'ground':
                 ui.message("You put %s on the floor" % thing_to_move.name)
@@ -156,31 +152,28 @@ def tick_world():
 
 
 def iterate():
-    ui.message("[g]o somewhere? [d]o something? [l]ook around? [e]xamine something? [w]ait? [i]nventory? [m]ove something?")
+    ui.refresh()
     action = ui.get_char()
-    ui.message('------')
     if action == 'g':
-        ui.message("Go where?")
         all_exits = player.location.get_all_exits()
         # filter out exits that can't be accessed
         all_exits = [
             e for e in all_exits if e.can_traverse(player) and e.to_location.can_contain(player)
         ]
-        which_exit = letter_prompt(all_exits, ">", lambda x: x.description)
+        which_exit = letter_prompt(all_exits, "Go where?", lambda x: x.description)
         if which_exit:
             ui.message("")
             player.tell("You go %s...\n" % which_exit.description)
             which_exit.to_location.add_thing(player)
             describe_location(player.location)
     elif action == 'd':
-        # action_prompt_v1()
-        action_prompt_v2()
+        action_prompt_v1()
+        # action_prompt_v2()
     elif action == 'm':
         move_prompt()
     elif action == 'e':
-        ui.message('Examine what?')
         accessible_things = [t for t in get_accessible_things(player)]
-        choice = letter_prompt(accessible_things, '>', thing_name_with_location)
+        choice = letter_prompt(accessible_things, 'Examine what?', thing_name_with_location)
         if choice:
             ui.message('')
             examine_thing(choice)

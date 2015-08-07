@@ -85,7 +85,6 @@ class ShrinkDigestible(Reaction):
         event.target.unbecome(ShrinkOnEat)
         # Get the owner of the stomach digesting this
         event.digester.tell("The world feels larger somehow...")
-        print 'OKAY I SAID IT'
         event.digester.size -= 1
 
 

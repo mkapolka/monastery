@@ -3,7 +3,6 @@ from location import PropertyLocation
 from properties import Immobile, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
 from properties.location_properties import get_accessible_things
 from utils import letter_prompt
-import ui
 
 
 class CantMoveException(Exception):
@@ -89,8 +88,7 @@ class GrindWithPestleAction(Action):
 
     @classmethod
     def perform(cls, thing, grinder):
-        ui.message("Grind what?")
-        choice = letter_prompt(GrindWithPestleAction.get_applicable_objects(thing, grinder), '>', lambda x: x.name)
+        choice = letter_prompt(GrindWithPestleAction.get_applicable_objects(thing, grinder), 'Grind what?', lambda x: x.name)
         if choice:
             # Grind it
             grinder.tell("You grind %s into a powder." % choice.name)
@@ -126,6 +124,3 @@ class OpenCloseAction(Action):
         else:
             opener.tell("You open %s" % thing.name)
             thing.become(Open)
-
-
-

@@ -33,8 +33,10 @@ def letter_prompt(options, prompt, str_func):
     if not str_func:
         str_func = str
     loppies = dict(eletterate(options, 'q'))
-    for l, option in eletterate(options, 'q'):
-        ui.message("[%s] %s" % (l, str_func(option)))
+    dd = dict([
+        (l, (str_func(option), option)) for (l, option) in loppies.items()
+    ])
+    return ui.prompt(prompt, dd)
     while True:
         value = ui.get_char()
         if value == 'q':
