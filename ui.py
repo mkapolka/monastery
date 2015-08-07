@@ -11,6 +11,9 @@ input_border = None
 room_scr = None
 
 
+input_prompt = "[g]o [d]o [l]ook [e]xamine [w]ait [i]nventory [m]ove"
+
+
 def init(scr):
     global stdscr
     global message_border
@@ -20,10 +23,10 @@ def init(scr):
     stdscr = scr
     height, width = stdscr.getmaxyx()
 
-    input_scr = stdscr.subwin(3, width, height - 3, 0)
+    input_scr = stdscr.subwin(3, len(input_prompt) + 4, height - 3, 0)
     input_scr.box()
-    input_scr.move(1, 1)
-    input_scr.addstr("[g]o [d]o [l]ook [e]xamine [w]ait [i]nventory [m]ove")
+    input_scr.move(1, 2)
+    input_scr.addstr(input_prompt)
 
     message_border = stdscr.subwin(height - 3, width, 0, 0)
     mh, mw = message_border.getmaxyx()
@@ -47,7 +50,7 @@ def prompt(message, option_struct):
     height = num_lines + 4
 
     scr_height, scr_width = stdscr.getmaxyx()
-    win = curses.newwin(height, width, scr_height - height, scr_width / 2 - width / 2)
+    win = curses.newwin(height, width, scr_height - height - 1, len(input_prompt) / 2 - width / 2)
 
     win.border()
     win.move(0, width / 2 - len(message) / 2)
