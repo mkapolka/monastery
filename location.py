@@ -1,5 +1,6 @@
 from enums import Size
 
+
 class Location(object):
     def __init__(self):
         self.things = []
@@ -103,6 +104,10 @@ class Exit(object):
         """
         return False
 
+    def can_view(self, thing):
+        """ Can <thing> see through this and receive messages from those inside? """
+        return False
+
     @property
     def from_location(self):
         raise NotImplementedError()
@@ -131,10 +136,11 @@ class StaticExit(Exit):
 
 
 class ThingExit(Exit):
-    def __init__(self, thing, access_requirements=None):
+    def __init__(self, thing, access_requirements=None, visible_requirements=None):
         super(ThingExit, self).__init__()
         self._thing = thing
         self._access_requirements = access_requirements or []
+        self._visible_requirements = visible_requirements or []
 
     def _get_description_parameters(self):
         d = super(ThingExit, self)._get_description_parameters()
@@ -144,6 +150,9 @@ class ThingExit(Exit):
     def can_access(self, thing):
         return all(map(lambda x: self._thing.is_property(x), self._access_requirements))
 
+    def can_view(self, thing):
+        return all(map(lambda x: self._thing.is_property(x), self._visible_requirements))
+
     def can_traverse(self, thing):
         return thing.size <= self._thing.size
 
@@ -151,8 +160,8 @@ class ThingExit(Exit):
 class OutsideExit(ThingExit):
     """ Exits to outside the given thing """
 
-    def __init__(self, from_loc, thing, access_requirements=None):
-        super(OutsideExit, self).__init__(thing, access_requirements)
+    def __init__(self, from_loc, thing, *args, **kwargs):
+        super(OutsideExit, self).__init__(thing, *args, **kwargs)
         self._from_location = from_loc
         self.description_template = 'Out of %(thing)s'
 
@@ -167,8 +176,8 @@ class OutsideExit(ThingExit):
 
 class EntranceExit(ThingExit):
     """ Entrance into a particular thing """
-    def __init__(self, thing, to_loc, access_requirements=None):
-        super(EntranceExit, self).__init__(thing, access_requirements)
+    def __init__(self, thing, to_loc, *args, **kwargs):
+        super(EntranceExit, self).__init__(thing, *args, **kwargs)
         self._to_location = to_loc
         self.description_template = 'Into %(thing)s'
 

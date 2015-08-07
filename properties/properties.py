@@ -1,6 +1,11 @@
 from property import Property
 
 
+class Bladed(Property):
+    types = ["mechanical"]
+    description = 'is bladed'
+
+
 class Boiling(Property):
     types = []
     description = 'is boiling'

@@ -7,15 +7,11 @@ import properties as p
 import templates as t
 
 
-class CantMoveException(Exception):
+class CantMoveReason():
     TooBig = 1
     CantTraverse = 2
     CantContain = 3
     CantHold = 4
-
-    def __init__(self, reason):
-        super(CantMoveException, self).__init__()
-        self.reason = reason
 
 
 def _liquid_holdable(holder, thing):
@@ -30,18 +26,52 @@ def can_hold(holder, thing):
         thing.size < holder.size
 
 
-def move_thing(mover, thing, entrance):
+def why_cant_move(mover, thing, entrance):
     if not can_hold(mover, thing):
-        raise CantMoveException(CantMoveException.CantHold)
-    if not entrance.can_traverse(thing):
-        raise CantMoveException(CantMoveException.CantTraverse)
+        return CantMoveReason.TooBig
     if not entrance.to_location.can_contain(thing):
         if entrance.to_location.size < thing.size:
-            raise CantMoveException(CantMoveException.TooBig)
-        raise CantMoveException(CantMoveException.CantContain)
+            return CantMoveReason.TooBig
+        return CantMoveReason.CantContain
+    if not entrance.can_traverse(thing):
+        return CantMoveReason.CantTraverse
+    return None
+
+
+def move_thing(mover, thing, entrance):
+    cant_move_reason = why_cant_move(mover, thing, entrance)
+    if cant_move_reason:
+        mover.tell({
+            CantMoveReason.TooBig: '%s is too big to fit %s' % (thing.name, entrance.to_location.name),
+            CantMoveReason.CantTraverse: "%s can't go %s" % (thing.name, entrance.description),
+            CantMoveReason.CantContain: "%s can't fit in %s" % (thing.name, entrance.to_location.name),
+            CantMoveReason.CantHold: "You can't move %s" % (thing.name)
+        }[cant_move_reason])
     else:
         mover.tell("You move %s %s" % (thing.name, entrance.description))
         entrance.to_location.add_thing(thing)
+
+
+class CutAction(Action):
+    prereq = p.Bladed
+
+    @classmethod
+    def describe(cls, thing):
+        return "Cut something with %s" % thing.name
+
+    @classmethod
+    def can_perform(cls, thing, cutter):
+        return True
+
+    @classmethod
+    def perform(cls, thing, cutter):
+        target = letter_prompt(get_accessible_things(cutter), 'Cut what?', lambda x: x.name)
+        if target:
+            if target.is_property(p.Hard):
+                cutter.tell("You try to cut %s but it's too hard." % target.name)
+            else:
+                target.become(p.Open)
+                cutter.tell("You cut %s open!" % target.name)
 
 
 class DrinkAction(Action):

@@ -1,6 +1,26 @@
+import collections
+
 from enums import Size
-from properties.location_properties import LocationProperty
+from properties.location_properties import LocationProperty, get_visible_things
 import ui
+
+message_queue = collections.deque()
+
+
+def queue_message(thing, message, to_others):
+    message_queue.append((thing, message, to_others))
+
+
+def flush_message_queue(player):
+    visible_things = get_visible_things(player)
+    for thing, message, to_others in message_queue:
+        if to_others:
+            if thing in visible_things and thing != player:
+                ui.message(message)
+        else:
+            if thing == player:
+                ui.message(message)
+    message_queue.clear()
 
 
 def destroy_thing(thing):
@@ -29,13 +49,15 @@ class Thing(object):
         return '<Thing:%s>' % self.name
 
     def tell(self, message):
-        if self.is_player:
-            ui.message(message)
+        # if self.is_player:
+            # ui.message(message)
+        queue_message(self, message, False)
 
     def tell_room(self, message):
-        for thing in self.location.things:
-            if thing != self:
-                thing.tell(message)
+        # for thing in self.location.things:
+            # if thing != self:
+                # thing.tell(message)
+        queue_message(self, message, True)
 
     def send_message(self, message_type, *args, **kwargs):
         for prop in self.properties.values():

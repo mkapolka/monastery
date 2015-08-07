@@ -11,7 +11,7 @@ input_border = None
 room_scr = None
 
 
-input_prompt = "[g]o [d]o [l]ook [e]xamine [w]ait [i]nventory [m]ove"
+input_prompt = "[g]o [d]o [l]ook [e]xamine [w]ait [i]nventory [m]ove [t]ake"
 
 
 def init(scr):

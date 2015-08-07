@@ -100,6 +100,13 @@ class Cat(Template):
     }
 
 
+class Knife(Template):
+    name = "a knife"
+    properties = [p.Bladed]
+    size = Size.small
+    material = m.Metal
+
+
 class Mortar(Template):
     name = "A mortar & pestle"
     properties = [MortarShaped]
@@ -129,7 +136,7 @@ class ShrinkyMushroom(Template):
 
 
 class TeaKettle(Template):
-    name = "A teapot"
+    name = "A tea kettle"
     size = Size.small
     properties = [IsContainer, TeapotShaped, p.Open]
     form = None

@@ -43,21 +43,40 @@ def get_all_contents(thing):
     ])
 
 
-def is_location_accessible(location, for_whom):
-    return True
+def _recurse_locations(location, location_filter=None, thing_filter=None, entrance_filter=None):
+    tf = lambda x: True
+    location_filter = location_filter or tf
+    thing_filter = thing_filter or tf
+    entrance_filter = entrance_filter or tf
+
+    if location_filter(location):
+        return [location] + flatten_array([
+            _recurse_locations(e.to_location, location_filter, thing_filter, entrance_filter)
+            for e in flatten_array([
+                entrances_to_thing(t) for t in location.things if thing_filter(t)
+            ]) if entrance_filter(e)
+        ])
+    else:
+        return []
 
 
 def get_accessible_locations(thing):
-    things = thing.location.things
-    entrances = flatten_array([entrances_to_thing(t) for t in things])
-    return [thing.location] + [
-        e.to_location for e in entrances if e.can_access(thing)
-    ]
+    return _recurse_locations(thing.location, entrance_filter=lambda e: e.can_access(thing))
 
 
 def get_accessible_things(thing):
     return itertools.chain(*[
         l.things for l in get_accessible_locations(thing)
+    ])
+
+
+def get_visible_locations(thing):
+    return _recurse_locations(thing.location, entrance_filter=lambda e: e.can_view(thing))
+
+
+def get_visible_things(thing):
+    return flatten_array([
+        l.things for l in get_visible_locations(thing)
     ])
 
 
@@ -87,7 +106,8 @@ class LocationProperty(Property):
         if hasattr(self, 'entrances_template'):
             for entrance in self.entrances_template:
                 requires = entrance.get('requires', None)
-                entrance_exit = EntranceExit(thing, self.locations[entrance['to']], requires)
+                viewing_requires = entrance.get('viewing_requires', None)
+                entrance_exit = EntranceExit(thing, self.locations[entrance['to']], requires, viewing_requires)
                 if 'description' in entrance:
                     entrance_exit.description_template = entrance['description']
                 self.entrances.append(entrance_exit)
@@ -121,7 +141,8 @@ class IsContainer(LocationProperty):
                 {
                     'to': 'outside',
                     'description': 'Out to %(to_location)s',
-                    'requires': [Open]
+                    'requires': [Open],
+                    'viewing_requires': [Open]
                 }
             ]
         }
@@ -131,7 +152,8 @@ class IsContainer(LocationProperty):
         {
             'to': 'contents',
             'description': 'Into %(thing)s',
-            'requires': [Open]
+            'requires': [Open],
+            'viewing_requires': [Open]
         }
     ]
 
@@ -170,9 +192,18 @@ class HasStomach(LocationProperty):
                     'to': 'outside',
                     'description': "Through %(thing)s's esophagus"
                 }
-            ]
+            ],
         }
     }
+
+    entrances_template = [
+        {
+            'to': 'contents',
+            'description': "Into %(thing)s's stomach",
+            'requires': [Open],
+            'viewing_requires': [Open]
+        }
+    ]
 
 
 class Inventory(LocationProperty):

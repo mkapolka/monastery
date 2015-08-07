@@ -1,14 +1,15 @@
 import sys
 import curses
 
-from actions import actions_for_thing, CantMoveException, move_thing, can_hold
+from actions import actions_for_thing, move_thing, can_hold
 from enums import Size
 from properties.location_properties import Inventory, get_accessible_things, get_all_locations, entrances_to_thing
 from reaction import process_event_queue, process_tick_events
 from templates.templates import Player, instantiate_template
-import ui
+from thing import flush_message_queue
 from utils import letter_prompt
 from world import World
+import ui
 
 player = instantiate_template(Player)
 player.is_player = True
@@ -76,26 +77,13 @@ def move_prompt():
         if thing_to_move.location != player.location:
             places.append('ground')
         places.append(player.get_property(Inventory).entrances[0])
-        target_location = letter_prompt(places, 'Move where?', lambda x: x.description if x != 'ground' else 'Onto the ground')
+        target_location = letter_prompt(places, 'Move %s where?' % thing_to_move.name, lambda x: x.description if x != 'ground' else 'Onto the ground')
         if target_location:
             if target_location == 'ground':
                 ui.message("You put %s on the floor" % thing_to_move.name)
                 player.location.add_thing(thing_to_move)
-                return
-
-            try:
+            else:
                 move_thing(player, thing_to_move, target_location)
-            except CantMoveException as e:
-                if e.reason == CantMoveException.TooBig:
-                    ui.message("%s won't fit %s!" % (thing_to_move.name, target_location.description))
-                    return
-                if e.reason == CantMoveException.CantTraverse:
-                    ui.message("%s can't go %s..." % (thing_to_move.name, target_location.description))
-                    return
-                if e.reason == CantMoveException.CantContain:
-                    ui.message("%s can't contain %s." % (target_location.description, thing_to_move.name))
-                    return
-                ui.message("Can't move %s to %s" % (thing_to_move.name, target_location.description))
 
 
 def examine_thing(thing):
@@ -179,6 +167,14 @@ def iterate():
         # action_prompt_v2()
     elif action == 'm':
         move_prompt()
+    elif action == 't':
+        # Take prompt
+        things = [t for t in get_accessible_things(player) if t != player]
+        choice = letter_prompt(things, 'Take what?', lambda x: x.name)
+        if choice:
+            if can_hold(player, choice):
+                move_thing(player, choice, player.get_property(Inventory).entrances[0])
+
     elif action == 'e':
         accessible_things = [t for t in get_accessible_things(player)]
         choice = letter_prompt(accessible_things, 'Examine what?', thing_name_with_location)
@@ -199,6 +195,7 @@ def iterate():
         if response:
             sys.exit()
     tick_world()
+    flush_message_queue(player)
 
 
 def game_loop(scr):
@@ -213,4 +210,5 @@ def game_loop(scr):
 
 
 if __name__ == "__main__":
-    curses.wrapper(game_loop)
+    if 'shell' not in sys.argv:
+        curses.wrapper(game_loop)
