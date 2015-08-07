@@ -23,6 +23,8 @@ def init(scr):
     stdscr = scr
     height, width = stdscr.getmaxyx()
 
+    curses.curs_set(0)
+
     input_scr = stdscr.subwin(3, len(input_prompt) + 4, height - 3, 0)
     input_scr.box()
     input_scr.move(1, 2)
@@ -40,7 +42,16 @@ def refresh():
     stdscr.refresh()
 
 
-def prompt(message, option_struct):
+def prompt(message, options):
+    """
+    options = [(letter, string, value)...]
+    """
+    if not options:
+        return None
+    option_struct = dict([
+        (c, (str, object)) for (c, str, object) in options
+    ])
+
     whole_lines = [
         '[%s] %s' % (c, str) for (c, (str, object)) in option_struct.items()
     ]
@@ -50,7 +61,10 @@ def prompt(message, option_struct):
     height = num_lines + 4
 
     scr_height, scr_width = stdscr.getmaxyx()
-    win = curses.newwin(height, width, scr_height - height - 1, len(input_prompt) / 2 - width / 2)
+    x = max(0, len(input_prompt) / 2 - width / 2)
+    y = max(0, scr_height - height - 1)
+
+    win = curses.newwin(height, width, y, x)
 
     win.border()
     win.move(0, width / 2 - len(message) / 2)
@@ -66,7 +80,7 @@ def prompt(message, option_struct):
     win.refresh()
     stdscr.refresh()
     try:
-        return option_struct[ch][1]
+        return option_struct[ch.lower()][1]
     except (ValueError, KeyError):
         return None
 

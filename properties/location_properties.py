@@ -24,9 +24,9 @@ def get_location_properties(thing):
 
 
 def get_all_locations(thing):
-    return itertools.chain(*[
+    return [x for x in itertools.chain(*[
         lp.locations.values() for lp in get_location_properties(thing)
-    ])
+    ])]
 
 
 def entrances_to_thing(thing):
@@ -134,6 +134,7 @@ class IsContainer(LocationProperty):
             'requires': [Open]
         }
     ]
+
 
 class Surface(LocationProperty):
     types = ['mechanical']

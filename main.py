@@ -16,21 +16,31 @@ world = World()
 world.locations['monastery_kitchen'].add_thing(player)
 
 
-def action_prompt_v1():
-    def describe_to_player(action_tuple):
-        thing, action = action_tuple
-        if thing.location == player.location:
-            return action.describe(thing)
-        else:
-            return "%s (%s)" % (action.describe(thing), thing.location.name)
+def describe_thing_to_player(thing):
+    if thing.location == player.location:
+        return thing.name
+    else:
+        return "%s (%s)" % (thing.name, thing.location.name)
 
+
+def describe_action_to_player(action_tuple):
+    thing, action = action_tuple
+    if thing.location == player.location:
+        return action.describe(thing)
+    else:
+        return "%s (%s)" % (action.describe(thing), thing.location.name)
+
+
+def action_prompt_v1():
     actions = []
     for thing in get_accessible_things(player):
         for action in actions_for_thing(thing):
             if action.can_perform(thing, player):
                 actions.append((thing, action))
 
-    which_action = letter_prompt(actions, "Do what?", describe_to_player)
+    if not actions:
+        ui.message("Can't use anything here.")
+    which_action = letter_prompt(actions, "Do what?", describe_action_to_player)
     if which_action:
         thing, action = which_action
         action.perform(thing, player)
@@ -41,14 +51,8 @@ def doable_actions_for_thing(thing):
 
 
 def action_prompt_v2():
-    def describe_to_player(thing):
-        if thing.location == player.location:
-            return thing.name
-        else:
-            return "%s (%s)" % (thing.name, thing.location.name)
-
     things = [t for t in get_accessible_things(player) if doable_actions_for_thing(t)]
-    which_thing = letter_prompt(things, "Use what?", describe_to_player)
+    which_thing = letter_prompt(things, "Use what?", describe_action_to_player)
     if which_thing:
         actions = [a for a in actions_for_thing(which_thing) if a.can_perform(which_thing, player)]
         which_action = letter_prompt(actions, "Do what?", lambda x: x.describe(which_thing))
@@ -58,16 +62,20 @@ def action_prompt_v2():
 
 def move_prompt():
     things = [t for t in get_accessible_things(player)]
-    thing_to_move = letter_prompt(things, 'Move what?', lambda x: x.name)
+    thing_to_move = letter_prompt(things, 'Move what?', describe_thing_to_player)
     if thing_to_move:
         if not can_hold(player, thing_to_move):
             ui.message("You can't hold that!")
             return
         places = []
-        for thing2 in player.location.things:
+        good_places = [t for t in player.location.things if t not in [player, thing_to_move]]
+        for thing2 in good_places:
             for entrance in entrances_to_thing(thing2):
-                places.append(entrance)
-        places.append('ground')
+                if entrance.to_location != thing_to_move.location:
+                    places.append(entrance)
+        if thing_to_move.location != player.location:
+            places.append('ground')
+        places.append(player.get_property(Inventory).entrances[0])
         target_location = letter_prompt(places, 'Move where?', lambda x: x.description if x != 'ground' else 'Onto the ground')
         if target_location:
             if target_location == 'ground':
@@ -187,7 +195,7 @@ def iterate():
         import pdb
         pdb.set_trace()
     elif action == 'ESC':
-        response = ui.prompt("Really quit?", {'y': ('yes', True), 'n': ('no', False)})
+        response = ui.prompt("Really quit?", [('y', 'Yes', True), ('n', 'No', False)])
         if response:
             sys.exit()
     tick_world()

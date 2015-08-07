@@ -128,7 +128,7 @@ class ShrinkyMushroom(Template):
     size = Size.apple
 
 
-class Teapot(Template):
+class TeaKettle(Template):
     name = "A teapot"
     size = Size.small
     properties = [IsContainer, TeapotShaped, p.Open]
@@ -150,7 +150,7 @@ class Table(Template):
 
     contents = {
         lp.Surface: [
-            Teapot
+            TeaKettle
         ]
     }
 
@@ -159,3 +159,15 @@ class Water(Template):
     name = "some water"
     size = Size.small
     properties = [p.Liquid, p.Boilable]
+
+
+class Well(Template):
+    name = "a well"
+    size = Size.medium
+    properties = [p.SpringsWater, p.IsContainer, p.Open]
+    material = m.Stone
+    contents = {
+        IsContainer: [
+            Water
+        ]
+    }

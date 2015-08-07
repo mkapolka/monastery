@@ -8,12 +8,12 @@ places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
         "exits": ["monastery_kitchen"],
-        "things": [Cat, t.CustomTemplate(t.Barrel, name='an armoire')]
+        "things": [Cat, t.Well]
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
         "exits": ["monastery_garden", "monastery_bathroom"],
-        "things": [Oven, t.Teapot, Barrel, Mortar]
+        "things": [Oven, t.TeaKettle, Barrel, Mortar]
     },
     "monastery_bathroom": {
         "name": "The Tonsured Privy",

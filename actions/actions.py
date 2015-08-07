@@ -1,8 +1,10 @@
 from action import Action
 from location import PropertyLocation
 from properties import Immobile, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
-from properties.location_properties import get_accessible_things
+from properties.location_properties import get_accessible_things, get_all_locations, entrances_to_thing
 from utils import letter_prompt
+import properties as p
+import templates as t
 
 
 class CantMoveException(Exception):
@@ -17,6 +19,7 @@ class CantMoveException(Exception):
 
 
 def _liquid_holdable(holder, thing):
+    # Is the liquid contained in something we can hold?
     if isinstance(thing.location, PropertyLocation):
         return can_hold(holder, thing.location.thing)
 
@@ -46,7 +49,7 @@ class DrinkAction(Action):
 
     @classmethod
     def describe(cls, thing):
-        return "Drink from %s" % thing.name
+        return "Drink %s" % thing.name
 
     @classmethod
     def can_perform(cls, thing, drinker):
@@ -90,18 +93,27 @@ class GrindWithPestleAction(Action):
     def perform(cls, thing, grinder):
         choice = letter_prompt(GrindWithPestleAction.get_applicable_objects(thing, grinder), 'Grind what?', lambda x: x.name)
         if choice:
-            # Grind it
-            grinder.tell("You grind %s into a powder." % choice.name)
-            for prop in choice.get_properties_of_types(['mechanical']):
-                choice.unbecome(prop.__class__, force=True)
-            # Powder properties TODO: abstract these somewhere?
-            choice.become(Dissolvable)
-            choice.name = 'some powdered %s' % choice.name
+            if choice.is_property(Liquid):
+                grinder.tell("You can't grind a liquid!")
+                return
+
+            if choice.size >= thing.size:
+                grinder.tell("%s is too big to grind with %s..." % (choice.name, thing.name))
+                return
+
+            if choice.size <= thing.size:
+                # Grind it
+                grinder.tell("You grind %s into a powder." % choice.name)
+                for prop in choice.get_properties_of_types(['mechanical']):
+                    choice.unbecome(prop.__class__, force=True)
+                # Powder properties TODO: abstract these somewhere?
+                choice.become(Dissolvable)
+                choice.name = 'some powdered %s' % choice.name
 
     @classmethod
     def get_applicable_objects(cls, thing, grinder):
         return [
-            t for t in get_accessible_things(grinder) if t.size <= thing.size
+            t for t in get_accessible_things(grinder) if t not in [grinder, thing]
         ]
 
 
@@ -124,3 +136,31 @@ class OpenCloseAction(Action):
         else:
             opener.tell("You open %s" % thing.name)
             thing.become(Open)
+
+
+class WellAction(Action):
+    prereq = p.SpringsWater
+
+    @classmethod
+    def describe(cls, thing):
+        return 'Fetch water from %s' % thing.name
+
+    @classmethod
+    def can_perform(cls, thing, actor):
+        return True
+
+    @classmethod
+    def perform(cls, thing, opener):
+        containers = get_accessible_things(opener)
+        container = letter_prompt(containers, 'Fill what?', lambda x: x.name)
+        if container:
+            if not can_hold(opener, container):
+                opener.tell("You can't hold %s" % container.name)
+            elif not any(map(lambda x: x.can_access(opener), entrances_to_thing(container))):
+                opener.tell("%s can't hold liquids..." % container.name)
+            else:
+                water = t.instantiate_template(t.Water)
+                location = get_all_locations(container)[0]
+                location.add_thing(water)
+                water.size = location.size
+                opener.tell("You fill %s with water." % container.name)
