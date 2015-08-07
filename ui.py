@@ -1,4 +1,8 @@
+import os
+
 import curses
+
+os.environ['ESCDELAY'] = '25'
 
 stdscr = None
 message_border = None
@@ -37,7 +41,7 @@ def prompt(message, option_struct):
     whole_lines = [
         '[%s] %s' % (c, str) for (c, (str, object)) in option_struct.items()
     ]
-    max_width = max(len(x) for x in whole_lines)
+    max_width = max(max(len(x) for x in whole_lines), len(message) + 4)
     num_lines = len(whole_lines)
     width = max_width + 4
     height = num_lines + 4
@@ -58,7 +62,10 @@ def prompt(message, option_struct):
     win.erase()
     win.refresh()
     stdscr.refresh()
-    return option_struct[ch][1]
+    try:
+        return option_struct[ch][1]
+    except (ValueError, KeyError):
+        return None
 
 
 def message(message):
@@ -71,4 +78,19 @@ def message(message):
 def get_char(scr=None):
     if not scr:
         scr = stdscr
-    return chr(scr.getch())
+    key = scr.getch()
+    if key == 27:  # Esc or Alt
+        return 'ESC'
+        # Don't wait for another key
+        # If it was Alt then curses has already sent the other key
+        # otherwise -1 is sent (Escape)
+        scr.nodelay(True)
+        n = scr.getch()
+        scr.nodelay(False)
+        if n == -1:
+            # Escape was pressed
+            return 'ESC'
+    try:
+        return chr(key)
+    except ValueError:
+        return -1

@@ -186,8 +186,10 @@ def iterate():
     elif action == 'pdb':
         import pdb
         pdb.set_trace()
-    elif action == 'q':
-        sys.exit()
+    elif action == 'ESC':
+        response = ui.prompt("Really quit?", {'y': ('yes', True), 'n': ('no', False)})
+        if response:
+            sys.exit()
     tick_world()
 
 
