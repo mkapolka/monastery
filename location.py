@@ -62,6 +62,11 @@ class PropertyLocation(Location):
         super(PropertyLocation, self).__init__()
         self.prop = prop
 
+    def add_thing(self, thing):
+        if thing == self.thing:
+            raise Exception("TRIED TO ADD %s TO A LOCATION IN ITSELF (%s)" % (thing.name, self.name))
+        super(PropertyLocation, self).add_thing(thing)
+
     def can_contain(self, thing):
         return thing.size <= self.size and thing != self.thing
 
@@ -95,7 +100,7 @@ class Exit(object):
         }
 
     def can_traverse(self, thing):
-        return True
+        return self.to_location.can_contain(thing)
 
     def can_access(self, thing):
         """
@@ -136,11 +141,12 @@ class StaticExit(Exit):
 
 
 class ThingExit(Exit):
-    def __init__(self, thing, access_requirements=None, visible_requirements=None):
+    def __init__(self, thing, access_requirements=None, visible_requirements=None, traversal_requirements=None):
         super(ThingExit, self).__init__()
         self._thing = thing
         self._access_requirements = access_requirements or []
         self._visible_requirements = visible_requirements or []
+        self._traversal_requirements = traversal_requirements or []
 
     def _get_description_parameters(self):
         d = super(ThingExit, self)._get_description_parameters()

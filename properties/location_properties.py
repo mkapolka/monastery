@@ -125,9 +125,11 @@ class LocationProperty(Property):
 
         if hasattr(self, 'entrances_template'):
             for entrance in self.entrances_template:
-                requires = entrance.get('requires', None)
-                viewing_requires = entrance.get('viewing_requires', None)
-                entrance_exit = EntranceExit(thing, self.locations[entrance['to']], requires, viewing_requires)
+                requires = entrance.get('requires', [])
+                accessing_requires = entrance.get('accessing_requires', []) + requires
+                traversing_requires = entrance.get('traversing_requires', []) + requires
+                viewing_requires = entrance.get('viewing_requires', []) + requires
+                entrance_exit = EntranceExit(thing, self.locations[entrance['to']], accessing_requires, viewing_requires, traversing_requires)
                 if 'description' in entrance:
                     entrance_exit.description_template = entrance['description']
                 self.entrances.append(entrance_exit)
@@ -162,7 +164,6 @@ class IsContainer(LocationProperty):
                     'to': 'outside',
                     'description': 'Out to %(to_location)s',
                     'requires': [Open],
-                    'viewing_requires': [Open]
                 }
             ]
         }
@@ -221,7 +222,6 @@ class HasStomach(LocationProperty):
             'to': 'contents',
             'description': "Into %(thing)s's stomach",
             'requires': [Open],
-            'viewing_requires': [Open]
         }
     ]
 

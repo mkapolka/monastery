@@ -1,5 +1,6 @@
 import sys
 
+from ai import create_ai, AIContext
 from enums import Size
 from form import Form
 from properties.forms import Human
@@ -7,6 +8,7 @@ from properties.location_properties import IsContainer, Inventory, HasStomach
 import properties.materials as m
 from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped, Openable
 from thing import Thing
+import ai
 import properties as p
 import properties.location_properties as lp
 
@@ -17,6 +19,9 @@ class LazyTemplate(object):
 
     def __getattr__(self, key):
         return getattr(getattr(sys.modules[__name__], self.template_name), key)
+
+    def __repr__(self):
+        return '<LazyTemplate:%s>' % self.template_name
 
 
 def lazy(template_name):
@@ -33,8 +38,13 @@ def instantiate_template(template):
         thing.become(prop)
     if hasattr(template, 'contents'):
         for prop, contents in template.contents.items():
-            for template in contents:
-                thing.get_property(prop).add_thing(instantiate_template(template))
+            for contained_template in contents:
+                thing.get_property(prop).add_thing(instantiate_template(contained_template))
+    if template.ai:
+        thing.ai_context = AIContext(thing)
+        thing.ai = create_ai(template.ai, thing.ai_context)
+        thing.ai.begin()
+        print thing.ai
     return thing
 
 
@@ -42,6 +52,7 @@ class Template(object):
     size = Size.medium
     form = None
     material = None
+    ai = None
 
 
 class CustomTemplate(Template):
@@ -111,6 +122,8 @@ class Cat(Template):
             Apple
         ]
     }
+
+    ai = ai.cat_ai
 
 
 class Knife(Template):

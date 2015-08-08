@@ -1,6 +1,7 @@
 import sys
 import curses
 
+from ai import AIState
 from actions import actions_for_thing, move_thing, can_hold
 from enums import Size
 from properties.location_properties import Inventory, get_accessible_things, get_all_locations, entrances_to_thing, inventory_location
@@ -142,7 +143,17 @@ def thing_name_with_location(thing):
         return "%s (%s)" % (thing.name, thing.location.name)
 
 
+def process_ais(world):
+    things = world.get_all_things()
+    for thing in things:
+        if thing.ai:
+            result = thing.ai.tick()
+            if result != AIState.InProgress:
+                thing.ai.begin()
+
+
 def tick_world():
+    process_ais(world)
     process_tick_events(world)
     process_event_queue(world)
 

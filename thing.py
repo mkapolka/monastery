@@ -44,6 +44,8 @@ class Thing(object):
         self.size = Size.medium
         self.is_player = False
         self.destroyed = False
+        self.ai = None
+        self.ai_context = None
 
     def __repr__(self):
         return '<Thing:%s>' % self.name
