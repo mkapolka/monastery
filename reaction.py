@@ -1,4 +1,5 @@
 import collections
+from thing import queue_message
 
 
 class Reaction(object):
@@ -20,9 +21,11 @@ class Reaction(object):
 
 
 class Event(object):
-    def __init__(self, name, target, **kwargs):
+    def __init__(self, name, target, performer=None, **kwargs):
         self.name = name
         self.target = target
+        self.performer = performer
+        self.negative_message = kwargs.pop('negative_message', None)
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -37,9 +40,13 @@ from reactions import reaction_table
 
 
 def process_event(event):
+    event_performed = False
     for reaction in reaction_table:
         if reaction.should_perform(event):
             reaction.perform(event)
+            event_performed = True
+    if not event_performed and event.performer and event.negative_message:
+        queue_message(event.performer, event.negative_message, False)
 
 
 def process_event_queue(world):

@@ -97,13 +97,16 @@ class Thing(object):
     def get_property(self, property_class):
         return self.__get_property(property_class)
 
-    def become(self, *property_classes):
+    def become(self, *property_classes, **kwargs):
+        custom_description = kwargs.pop('custom_description', None)
         for property_class in property_classes:
             prop = self.__get_property(property_class)
             if prop:
                 prop.count += 1
             else:
                 prop = property_class(self)
+                if custom_description:
+                    prop.description = custom_description
                 prop.count += 1
                 self.__add_property(prop)
 

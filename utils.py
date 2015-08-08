@@ -32,8 +32,7 @@ def eletterate(options, reserved_letters=None):
 def letter_prompt(options, prompt, str_func):
     if not str_func:
         str_func = str
-    loppies = dict(eletterate(options))
-    dd = [(l, str_func(option), option) for (l, option) in loppies.items()]
+    dd = [(l, str_func(option), option) for (l, option) in eletterate(options)]
     return ui.prompt(prompt, dd)
 
 

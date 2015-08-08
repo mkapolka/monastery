@@ -12,13 +12,18 @@ places = {
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
-        "exits": ["monastery_garden", "monastery_bathroom"],
+        "exits": ["monastery_garden", "monastery_solar", "monastery_closet"],
         "things": [Oven, t.TeaKettle, Barrel, t.Knife]
     },
-    "monastery_bathroom": {
-        "name": "The Tonsured Privy",
+    "monastery_solar": {
+        "name": "the solar",
         "exits": ["monastery_kitchen"],
-        "things": [t.ShrinkyMushroom, Mortar]
+        "things": [t.ShrinkyMushroom, Mortar, t.NeedleAndThread]
+    },
+    "monastery_closet": {
+        "name": "the broom closet",
+        "exits": ["monastery_kitchen"],
+        "things": [t.ShrinkyMushroom, t.Bucket, t.Sponge]
     }
 }
 

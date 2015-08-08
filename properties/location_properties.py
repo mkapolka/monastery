@@ -80,6 +80,26 @@ def get_visible_things(thing):
     ])
 
 
+def add_to_contents(container, thing):
+    if container.is_property(IsContainer):
+        container.is_property(IsContainer).add_thing(thing)
+
+
+def container_location(container):
+    if container.is_property(IsContainer):
+        return container.get_property(IsContainer).locations.values()[0]
+
+
+def add_to_inventory(container, thing):
+    if container.is_property(Inventory):
+        container.get_property(Inventory).add_thing(thing)
+
+
+def inventory_location(container):
+    if container.is_property(Inventory):
+        return container.get_property(Inventory).locations.values()[0]
+
+
 class LocationProperty(Property):
     def __init__(self, thing, *args):
         super(LocationProperty, self).__init__(thing, *args)

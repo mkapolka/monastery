@@ -53,7 +53,7 @@ def prompt(message, options):
     ])
 
     whole_lines = [
-        '[%s] %s' % (c, str) for (c, (str, object)) in option_struct.items()
+        '[%s] %s' % (c, str) for (c, str, object) in options
     ]
     max_width = max(max(len(x) for x in whole_lines), len(message) + 4)
     num_lines = len(whole_lines)

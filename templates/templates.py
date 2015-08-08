@@ -88,6 +88,19 @@ class Barrel(Template):
     }
 
 
+class Bucket(Template):
+    name = "a bucket"
+    properties = [lp.IsContainer, p.Open]
+    size = Size.stool
+    material = m.Wood
+
+    contents = {
+        IsContainer: [
+            lazy('Water')
+        ]
+    }
+
+
 class Cat(Template):
     name = "A dozy cat"
     properties = [HasStomach]
@@ -114,9 +127,16 @@ class Mortar(Template):
     material = m.Stone
 
 
+class NeedleAndThread(Template):
+    name = 'a needle and thread'
+    properties = [p.Sews]
+    size = Size.small
+    material = m.Metal
+
+
 class Oven(Template):
     name = "An oven"
-    properties = [IsContainer, Hot, p.Open]
+    properties = [IsContainer, Hot, p.Open, p.Immobile]
     material = m.Metal
     size = Size.stool
 
@@ -129,14 +149,21 @@ class Player(Template):
 
 
 class ShrinkyMushroom(Template):
-    name = "Spiteful fungi"
-    properties = [ShrinkOnEat]
+    name = "spiteful fungi"
+    properties = [ShrinkOnEat, Edible]
     material = m.Plant
     size = Size.apple
 
 
+class Sponge(Template):
+    name = 'a sponge'
+    properties = [IsContainer, p.Absorbant]
+    size = Size.small
+    material = m.Plant
+
+
 class TeaKettle(Template):
-    name = "A tea kettle"
+    name = "a tea kettle"
     size = Size.small
     properties = [IsContainer, TeapotShaped, p.Open]
     form = None

@@ -1,10 +1,27 @@
 from action import Action
 from location import PropertyLocation
 from properties import Immobile, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
-from properties.location_properties import get_accessible_things, get_all_locations, entrances_to_thing
-from utils import letter_prompt
+from properties.location_properties import get_accessible_things, get_all_locations, entrances_to_thing, get_all_contents
+from utils import letter_prompt, flatten_array
 import properties as p
+import properties.location_properties as lp
+from reaction import enqueue_event, Event
 import templates as t
+
+
+def choose_target(performer, prompt, filter_func=None, ignore=None):
+    def describe_to_performer(thing):
+        if thing.location == performer.location:
+            return thing.name
+        else:
+            return '%s (%s)' % (thing.name, thing.location.name)
+
+    if not filter_func:
+        filter_func = lambda x: True
+    if not ignore:
+        ignore = []
+    choices = [t for t in get_accessible_things(performer) if t not in ignore and filter_func(t)]
+    return letter_prompt(choices, prompt, describe_to_performer)
 
 
 class CantMoveReason():
@@ -65,13 +82,10 @@ class CutAction(Action):
 
     @classmethod
     def perform(cls, thing, cutter):
-        target = letter_prompt(get_accessible_things(cutter), 'Cut what?', lambda x: x.name)
+        target = choose_target(cutter, 'Cut what?', ignore=[thing])
         if target:
-            if target.is_property(p.Hard):
-                cutter.tell("You try to cut %s but it's too hard." % target.name)
-            else:
-                target.become(p.Open)
-                cutter.tell("You cut %s open!" % target.name)
+            cutter.tell("You slash at %s..." % target.name)
+            enqueue_event(Event('slash', target, cutter, negative_message='...but nothing happens'))
 
 
 class DrinkAction(Action):
@@ -121,7 +135,7 @@ class GrindWithPestleAction(Action):
 
     @classmethod
     def perform(cls, thing, grinder):
-        choice = letter_prompt(GrindWithPestleAction.get_applicable_objects(thing, grinder), 'Grind what?', lambda x: x.name)
+        choice = choose_target(grinder, 'Grind what?', ignore=[thing])
         if choice:
             if choice.is_property(Liquid):
                 grinder.tell("You can't grind a liquid!")
@@ -139,12 +153,6 @@ class GrindWithPestleAction(Action):
                 # Powder properties TODO: abstract these somewhere?
                 choice.become(Dissolvable)
                 choice.name = 'some powdered %s' % choice.name
-
-    @classmethod
-    def get_applicable_objects(cls, thing, grinder):
-        return [
-            t for t in get_accessible_things(grinder) if t not in [grinder, thing]
-        ]
 
 
 class OpenCloseAction(Action):
@@ -168,6 +176,67 @@ class OpenCloseAction(Action):
             thing.become(Open)
 
 
+class SewAction(Action):
+    prereq = p.Sews
+
+    @classmethod
+    def can_perform(cls, thing, performer):
+        return True
+
+    @classmethod
+    def describe(cls, thing):
+        return 'Sew something with %s' % thing.name
+
+    @classmethod
+    def perform(cls, thing, performer):
+        target = choose_target(performer, 'Sew what?', ignore=[thing])
+        if target:
+            if not target.is_property(p.Soft):
+                performer.tell("%s is too hard to sew up." % target.name)
+            elif not target.is_property(p.Open):
+                performer.tell("%s doesn't need to be sewn up." % target.name)
+            else:
+                performer.tell("You sew %s shut." % target.name)
+                target.unbecome(Open)
+
+
+class SopWringAction(Action):
+    prereq = p.Absorbant
+
+    @classmethod
+    def _contains_liquid(cls, thing):
+        return any(map(lambda x: x.is_property(p.Liquid), get_all_contents(thing)))
+
+    @classmethod
+    def can_perform(cls, thing, sopper):
+        return True
+
+    @classmethod
+    def describe(cls, thing):
+        return 'Wring out %s' % thing.name if cls._contains_liquid(thing) else 'Sop up liquid with %s' % thing.name
+
+    @classmethod
+    def perform(cls, thing, sopper):
+        if cls._contains_liquid(thing):
+            things = [t for t in get_accessible_things(sopper) if t != thing]
+            entrances = flatten_array(entrances_to_thing(t) for t in things)
+            entrances = filter(lambda x: x.can_access(sopper), entrances)
+            choice = letter_prompt(entrances, 'Wring into what?', lambda x: x.description)
+            if choice:
+                sopper.tell("You wring out %s %s" % (thing.name, choice.description))
+                for content in get_all_contents(thing):
+                    choice.to_location.add_thing(content)
+        else:
+            things = [t for t in get_accessible_things(sopper) if t != thing]
+            choice = choose_target(things, 'Sop what?', ignore=[thing])
+            if choice:
+                if choice.is_property(Liquid):
+                    sopper.tell("You sop up %s" % choice.name)
+                    thing.get_property(lp.IsContainer).add_thing(choice)
+                else:
+                    sopper.tell("You can't sop that up!")
+
+
 class WellAction(Action):
     prereq = p.SpringsWater
 
@@ -181,8 +250,7 @@ class WellAction(Action):
 
     @classmethod
     def perform(cls, thing, opener):
-        containers = get_accessible_things(opener)
-        container = letter_prompt(containers, 'Fill what?', lambda x: x.name)
+        container = choose_target(opener, 'Fill what?', ignore=thing)
         if container:
             if not can_hold(opener, container):
                 opener.tell("You can't hold %s" % container.name)

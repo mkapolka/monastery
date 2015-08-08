@@ -19,7 +19,7 @@ class Wood(Material):
 
 class Flesh(Material):
     name = 'flesh'
-    properties = [p.Flammable, p.Phlogiston]
+    properties = [p.Flammable, p.Phlogiston, p.Soft]
 
 
 class Plant(Material):

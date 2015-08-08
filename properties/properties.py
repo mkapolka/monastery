@@ -1,6 +1,11 @@
 from property import Property
 
 
+class Absorbant(Property):
+    types = ['mechanical', 'physical']
+    description = 'is absorbant'
+
+
 class Bladed(Property):
     types = ["mechanical"]
     description = 'is bladed'
@@ -78,6 +83,16 @@ class Openable(Property):
 class Phlogiston(Property):
     types = ['physical']
     description = 'will be consumed by fire'
+
+
+class Sews(Property):
+    types = ['mechanical']
+    description = 'can be used to sew things'
+
+
+class Soft(Property):
+    types = ['physical']
+    description = 'is soft'
 
 
 class ShrinkOnEat(Property):

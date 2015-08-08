@@ -3,7 +3,7 @@ import curses
 
 from actions import actions_for_thing, move_thing, can_hold
 from enums import Size
-from properties.location_properties import Inventory, get_accessible_things, get_all_locations, entrances_to_thing
+from properties.location_properties import Inventory, get_accessible_things, get_all_locations, entrances_to_thing, inventory_location
 from reaction import process_event_queue, process_tick_events
 from templates.templates import Player, instantiate_template
 from thing import flush_message_queue
@@ -69,10 +69,10 @@ def move_prompt():
             ui.message("You can't hold that!")
             return
         places = []
-        good_places = [t for t in player.location.things if t not in [player, thing_to_move]]
+        good_places = [t for t in player.location.things if t not in [thing_to_move]]
         for thing2 in good_places:
             for entrance in entrances_to_thing(thing2):
-                if entrance.to_location != thing_to_move.location:
+                if entrance.to_location != thing_to_move.location and entrance.to_location != inventory_location(player):
                     places.append(entrance)
         if thing_to_move.location != player.location:
             places.append('ground')
@@ -170,7 +170,7 @@ def iterate():
     elif action == 't':
         # Take prompt
         things = [t for t in get_accessible_things(player) if t != player]
-        choice = letter_prompt(things, 'Take what?', lambda x: x.name)
+        choice = letter_prompt(things, 'Take what?', describe_thing_to_player)
         if choice:
             if can_hold(player, choice):
                 move_thing(player, choice, player.get_property(Inventory).entrances[0])

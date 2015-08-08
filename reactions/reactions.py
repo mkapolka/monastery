@@ -3,6 +3,7 @@ from properties.location_properties import HasStomach, get_all_contents, are_tou
 from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped, Boiling, Hot
 from reaction import Reaction, enqueue_event, Event
 from thing import destroy_thing
+from utils import sentence
 import properties as p
 
 
@@ -51,6 +52,19 @@ class BurnNearby(Reaction):
             event.target.tell_room("%s burns %s" % (event.target.name, neighbor.name))
 
 
+class CutOpen(Reaction):
+    anti_predicates = [p.Open, p.Hard]
+    event = "slash"
+
+    @classmethod
+    def perform(cls, event):
+        if event.target.locations:
+            thing = event.target
+            thing.become(p.Open, custom_description='has been slashed open')
+            thing.unbecome(p.Openable)
+            event.performer.tell("You slash open %s!" % thing.name)
+
+
 class DigestContents(Reaction):
     predicates = [HasStomach]
     event = "tick"
@@ -86,6 +100,25 @@ class ShrinkDigestible(Reaction):
         # Get the owner of the stomach digesting this
         event.digester.tell("The world feels larger somehow...")
         event.digester.size -= 1
+
+
+class MergeLiquids(Reaction):
+    predicates = [p.Liquid]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        neighbors = [t for t in event.target.location.things if t != event.target
+                     and are_touching(event.target, t)
+                     and t.is_property(p.Liquid)]
+        if neighbors:
+            neighbor_names = [name for name in map(lambda x: x.name, neighbors) if name != event.target.name]
+            if neighbor_names:
+                event.target.tell_room('%s mixes with %s' % (event.target.name, sentence(neighbor_names)))
+            for neighbor in neighbors:
+                event.target.size = max(event.target.size, neighbor.size)
+                event.target.transfer_properties(neighbor, neighbor.get_properties_of_types(['physical', 'chemical']))
+                destroy_thing(neighbor)
 
 
 class WhistleyTeapot(Reaction):
