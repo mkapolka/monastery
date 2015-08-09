@@ -30,11 +30,12 @@ class AINode(object):
         pass
 
     def tick(self):
-        pass
+        return AIState.Done
 
 
 # Swizzle with context
 def create_ai(struct, ctx):
+    from ais import aliases
     ai_class = struct[0]
     has_kwargs = isinstance(struct[-1], dict)
     if has_kwargs:
@@ -43,6 +44,10 @@ def create_ai(struct, ctx):
     else:
         args = struct[1:]
         kwargs = {}
+
+    # aliases
+    if isinstance(ai_class, str):
+        return create_ai(aliases[ai_class](*args, **kwargs), ctx)
 
     args = [create_ai(a, ctx) if isinstance(a, tuple) else a for a in args]
     for key, value in kwargs:

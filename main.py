@@ -7,7 +7,7 @@ from enums import Size
 from properties.location_properties import Inventory, get_accessible_things, get_all_locations, entrances_to_thing, inventory_location
 from reaction import process_event_queue, process_tick_events
 from templates.templates import Player, instantiate_template
-from thing import flush_message_queue
+from thing import flush_message_queue, cleanup_thing
 from utils import letter_prompt
 from world import World
 import ui
@@ -152,10 +152,17 @@ def process_ais(world):
                 thing.ai.begin()
 
 
+def cleanup_destroyed_things():
+    for thing in world.get_all_things():
+        if thing.destroyed:
+            cleanup_thing(thing)
+
+
 def tick_world():
     process_ais(world)
     process_tick_events(world)
     process_event_queue(world)
+    cleanup_destroyed_things()
 
 
 def iterate():

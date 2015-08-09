@@ -251,7 +251,7 @@ class WellAction(Action):
 
     @classmethod
     def perform(cls, thing, opener):
-        container = choose_target(opener, 'Fill what?', ignore=thing)
+        container = choose_target(opener, 'Fill what?', ignore=[thing])
         if container:
             if not can_hold(opener, container):
                 opener.tell("You can't hold %s" % container.name)

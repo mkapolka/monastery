@@ -3,6 +3,7 @@ import itertools
 from location import Location, StaticExit
 from templates.templates import Oven, Barrel, Mortar, Cat, instantiate_template
 import templates as t
+from utils import flatten_array
 
 places = {
     "monastery_garden": {
@@ -23,7 +24,7 @@ places = {
     "monastery_closet": {
         "name": "the broom closet",
         "exits": ["monastery_kitchen"],
-        "things": [t.ShrinkyMushroom, t.Bucket, t.Sponge]
+        "things": [t.ShrinkyMushroom, t.Bucket, t.Sponge, t.Mouse]
     }
 }
 
@@ -60,11 +61,11 @@ class World(object):
         self.locations = make_locations(places)
 
     def get_all_locations(self):
-        return itertools.chain(*[
+        return flatten_array([
             _recurse_location(l) for l in self.locations.values()
         ])
 
     def get_all_things(self):
-        return itertools.chain(*[
+        return flatten_array([
             l.things for l in self.get_all_locations()
         ])

@@ -12,3 +12,10 @@ class Property(object):
     @classmethod
     def key(cls):
         return str(cls)
+
+    def clone(self, new_thing):
+        output = self.__class__(new_thing)
+        output.description = self.description
+        output.types = self.types
+        output.count = self.count
+        return output

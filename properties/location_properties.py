@@ -238,6 +238,6 @@ class Inventory(LocationProperty):
         {
             'to': 'inventory',
             'description': "Into %(thing)s's backpack",
-            'traversal_requires': []
+            'traversing_requires': [Open]
         }
     ]

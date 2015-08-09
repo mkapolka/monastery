@@ -45,7 +45,6 @@ def instantiate_template(template):
         thing.ai_context = AIContext(thing)
         thing.ai = create_ai(ai_program, thing.ai_context)
         thing.ai.begin()
-        print thing.ai
     return thing
 
 
@@ -83,6 +82,11 @@ class Apple(Template):
     name = "an apple"
     properties = [Edible]
     size = Size.apple
+
+
+class Bolus(Template):
+    name = 'a bolus'
+    properties = [p.Soft]
 
 
 class Barrel(Template):
@@ -136,6 +140,15 @@ class Mortar(Template):
     material = m.Stone
 
 
+class Mouse(Template):
+    name = 'a field mouse'
+    properties = [lp.HasStomach]
+    size = Size.small
+    material = m.Flesh
+
+    ai = 'mouse_ai'
+
+
 class NeedleAndThread(Template):
     name = 'a needle and thread'
     properties = [p.Sews]
@@ -159,7 +172,7 @@ class Player(Template):
 
 class ShrinkyMushroom(Template):
     name = "spiteful fungi"
-    properties = [ShrinkOnEat, Edible]
+    properties = [ShrinkOnEat, Edible, p.Digestible]
     material = m.Plant
     size = Size.apple
 

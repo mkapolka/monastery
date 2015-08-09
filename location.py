@@ -160,7 +160,7 @@ class ThingExit(Exit):
         return all(map(lambda x: self._thing.is_property(x), self._visible_requirements))
 
     def can_traverse(self, thing):
-        return thing.size <= self._thing.size
+        return self.to_location.can_contain(thing) and all(map(lambda x: self._thing.is_property(x), self._traversal_requirements))
 
 
 class OutsideExit(ThingExit):

@@ -28,12 +28,16 @@ def flush_message_queue(player):
 
 def destroy_thing(thing):
     thing.destroyed = True
-    for prop in thing.properties.values():
-        prop.destroy()
-    thing.properties = {}
-    thing.form = None
-    thing.material = None
-    thing.location.remove_thing(thing)
+
+
+def cleanup_thing(thing):
+    if thing.destroyed:
+        for prop in thing.properties.values():
+            prop.destroy()
+        thing.properties = {}
+        thing.form = None
+        thing.material = None
+        thing.location.remove_thing(thing)
 
 
 class Thing(object):

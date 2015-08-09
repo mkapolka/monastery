@@ -2,42 +2,69 @@ import random
 
 from ai import AINode, AIState
 from properties.location_properties import get_accessible_things
+from templates import instantiate_template
+from utils import pick_random
+import properties.location_properties as lp
 import actions as a
 import properties.materials as m
+import properties as p
+import templates as t
 
 
-class FinderNode(AINode):
-    def get_result(self):
-        return None
+class Description(AINode):
+    def __init__(self, ctx, message):
+        super(Description, self).__init__(ctx)
+        self.done = False
+        self.message = message
+
+    def begin(self):
+        self.done = False
 
     def tick(self):
+        if not self.done:
+            self.done = True
+            self.context.description = self.message
         return AIState.Done
 
 
-class AccessibleThings(FinderNode):
-    def get_result(self):
-        return get_accessible_things(self.thing)
-
-
-class FilterThings(FinderNode):
-    def __init__(self, ctx, sub_node, filter_method=None):
-        super(FilterThings, self).__init__(ctx)
-        self.sub_node = sub_node
-        if filter_method is None:
-            filter_method = lambda ctx, t: True
-        self.filter_method = filter_method
+class Eat(AINode):
+    def __init__(self, ctx, filter_func):
+        super(Eat, self).__init__(ctx)
+        self.filter_func = filter_func
 
     def begin(self):
-        self.sub_node.begin()
+        self.eaten = False
 
     def tick(self):
-        return self.sub_node.tick()
+        if not self.thing.is_property(lp.HasStomach):
+            return AIState.Fail
 
-    def get_result(self):
-        result = self.sub_node.tick()
-        if result == AIState.Done:
-            return [t for t in self.sub_node.get_result() if self.filter_method(self.context, t)]
-        return []
+        if self.eaten:
+            return self.eaten
+
+        things = [th for th in get_accessible_things(self.thing) if self.filter_func(self.context, th)]
+        if things:
+            target = pick_random(things)
+            if a.EatAction.can_perform(target, self.thing):
+                a.EatAction.perform(target, self.thing)
+                self.eaten = AIState.Done
+                return AIState.InProgress
+        self.eaten = AIState.Fail
+        return AIState.Fail
+
+
+class Fail(AINode):
+    def __init__(self, ctx, child):
+        super(Fail, self).__init__(ctx)
+        self.child = child
+
+    def begin(self):
+        self.child.begin()
+
+    def tick(self):
+        if self.child.tick() == AIState.InProgress:
+            return AIState.InProgress
+        return AIState.Fail
 
 
 class Message(AINode):
@@ -45,8 +72,15 @@ class Message(AINode):
         super(Message, self).__init__(ctx)
         self.message = message
         self.to_whom = to_whom
+        self.fired = False
+
+    def begin(self):
+        self.fired = False
 
     def tick(self):
+        if self.fired:
+            return AIState.Done
+
         message = self.message % self.get_parameters()
         if self.to_whom == 'self':
             self.thing.tell(message)
@@ -54,6 +88,7 @@ class Message(AINode):
             self.thing.tell_room(message)
         else:
             self.thing.broadcast(message)
+        self.fired = True
         return AIState.Done
 
     def get_parameters(self):
@@ -62,53 +97,34 @@ class Message(AINode):
         }
 
 
-class Sequence(AINode):
-    def __init__(self, ctx, *tasks):
-        self.tasks = tasks
-        self.idx = 0
+class Nibble(AINode):
+    def __init__(self, ctx, filter_func):
+        super(Nibble, self).__init__(ctx)
+        self.filter_func = filter_func
 
     def begin(self):
-        self.idx = 0
-        for task in self.tasks:
-            task.begin()
+        self.nibbled = False
 
     def tick(self):
-        if self.idx >= len(self.tasks):
+        if not self.thing.is_property(lp.HasStomach):
+            return AIState.Fail
+
+        if self.nibbled:
             return AIState.Done
 
-        result = self.tasks[self.idx].tick()
-        if result == AIState.Done:
-            self.idx += 1
-            return self.tick()
-        else:
-            return result
-
-
-class Eat(AINode):
-    def __init__(self, ctx, finder_ai):
-        super(Eat, self).__init__(ctx)
-        self.finder = finder_ai
-        self.done = False
-
-    def begin(self):
-        self.finder.begin()
-        self.done = False
-
-    def tick(self):
-        if self.done:
-            return AIState.Done
-
-        result = self.finder.tick()
-        if result == AIState.Done:
-            target = self.finder.get_result()
-            if target:
-                target = target[0]
-                if a.EatAction.can_perform(target, self.thing):
-                    a.EatAction.perform(target, self.thing)
-                    return AIState.InProgress
-            return AIState.Error
-        else:
-            return result
+        things = [th for th in get_accessible_things(self.thing) if self.filter_func(self.context, th)]
+        if things:
+            nibble_target = pick_random(things)
+            self.thing.broadcast("%s nibbles on %s" % (self.thing.name, nibble_target.name))
+            bolus = instantiate_template(t.Bolus)
+            bolus.name = 'a %s bolus' % nibble_target.material.name
+            bolus.become(p.Digestible)
+            for key, prop in nibble_target.properties.items():
+                bolus.properties[key] = prop.clone(bolus)
+            self.thing.get_property(lp.HasStomach).add_thing(bolus)
+            self.nibbled = True
+            return AIState.InProgress
+        return AIState.Fail
 
 
 class Random(AINode):
@@ -118,14 +134,62 @@ class Random(AINode):
         self.choice = None
 
     def begin(self):
-        self.choice = None
+        self.choice = pick_random(self.options)
         for option in self.options:
             option.begin()
 
     def tick(self):
-        if self.choice is None:
-            self.choice = random.randint(0, len(self.options) - 1)
-        return self.options[self.choice].tick()
+        return self.choice.tick()
+
+
+class RepeatUntilDone(AINode):
+    def __init__(self, ctx, subnode):
+        super(RepeatUntilDone, self).__init__(ctx)
+        self.subnode = subnode
+
+    def begin(self):
+        self.subnode.begin()
+
+    def tick(self):
+        result = self.subnode.tick()
+        if result == AIState.Fail:
+            self.begin()
+            return AIState.InProgress
+        else:
+            return result
+
+
+class Sequence(AINode):
+    def __init__(self, ctx, *tasks):
+        self.tasks = tasks
+
+    def begin(self):
+        for task in self.tasks:
+            task.begin()
+
+    def tick(self):
+        for task in self.tasks:
+            result = task.tick()
+            if result != AIState.Done:
+                return result
+        return AIState.Done
+
+
+class Selector(AINode):
+    def __init__(self, ctx, *tasks):
+        super(Selector, self).__init__(ctx)
+        self.tasks = tasks
+
+    def begin(self):
+        for task in self.tasks:
+            task.begin()
+
+    def tick(self):
+        for task in self.tasks:
+            result = task.tick()
+            if result != AIState.Fail:
+                return result
+        return AIState.Fail
 
 
 class Wander(AINode):
@@ -136,7 +200,7 @@ class Wander(AINode):
         if self.has_wandered:
             return AIState.Done
 
-        entrances = [e for e in self.thing.location.get_all_exits() if e.can_traverse(self.thing) and e.to_location.can_contain(self.thing)]
+        entrances = [e for e in self.thing.location.get_all_exits() if e.can_traverse(self.thing)]
         if entrances:
             entrance = entrances[random.randint(0, len(entrances) - 1)]
             from_location = self.thing.location
@@ -166,8 +230,23 @@ class Wait(AINode):
             return AIState.InProgress
 
 
-cat_ai = (Random, (Sequence, (Wander,), (Random, (Wait, 2), (Wait, 4), (Wait, 6))),
-                  (Sequence, (Message, "%(thing)s falls asleep"),
-                             (Random, (Wait, 2), (Wait, 4), (Wait, 6), (Wait, 8), (Wait, 10)),
-                             (Message, "%(thing)s wakes up")),
-                  (Eat, (FilterThings, (AccessibleThings,), lambda ctx, t: t.material == m.Flesh and a.EatAction.can_perform(t, ctx.thing))))
+aliases = {
+    'wander': lambda: (Sequence, (Description, "is wandering"),
+                                 (Random, (Wait, 2), (Wait, 4), (Wait, 6)),
+                                 (Wander,)),
+    'sleep': lambda: (Sequence, (Message, "%(thing)s falls asleep"),
+                                (Description, "is asleep"),
+                                (Random, (Wait, 2), (Wait, 4), (Wait, 6), (Wait, 8), (Wait, 10)),
+                                (Message, "%(thing)s wakes up")),
+    'wander_until_can': lambda thing: (RepeatUntilDone, (Selector, thing,
+                                                         (Fail, (Wander,)),
+                                                         (Fail, (Message, "%(thing)s leers around hungrily"))))
+}
+
+cat_ai = (Random, ('wander',),
+                  ('sleep',),
+                  ('wander_until_can', (Eat, lambda ctx, x: x.material == m.Flesh and x.size < ctx.thing.size)))
+
+mouse_ai = (Random, ('wander',),
+                    ('sleep',),
+                    ('wander_until_can', (Nibble, lambda ctx, t: t.material == m.Plant)))

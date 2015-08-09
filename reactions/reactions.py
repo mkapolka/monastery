@@ -76,6 +76,16 @@ class DigestContents(Reaction):
             enqueue_event(Event("digest", thing, digester=event.target))
 
 
+class DigestDigestibles(Reaction):
+    predicates = [p.Digestible]
+    event = "digest"
+
+    @classmethod
+    def perform(cls, event):
+        event.target.tell_room("%s dissolves into mush" % event.target.name)
+        destroy_thing(event.target)
+
+
 class DissolveIntoLiquid(Reaction):
     predicates = [p.Dissolvable]
     event = "tick"
@@ -96,11 +106,18 @@ class ShrinkDigestible(Reaction):
 
     @classmethod
     def perform(cls, event):
-        event.target.unbecome(ShrinkOnEat)
-        # Get the owner of the stomach digesting this
-        event.digester.tell("The world feels larger somehow...")
-        event.digester.broadcast("%s shrinks!" % event.target.name)
-        event.digester.size -= 1
+        if event.digester.size > Size.small:
+            event.target.unbecome(ShrinkOnEat)
+            # Get the owner of the stomach digesting this
+            event.digester.tell("The world feels larger somehow...")
+            event.digester.broadcast("%s shrinks!" % event.digester.name)
+            event.digester.size -= 1
+            for thing in get_all_contents(event.digester):
+                thing.size -= 1
+                if thing.size < 0:
+                    thing.tell_room("%s winks out of existence!" % thing.name)
+                    thing.tell("You wink out of existence!")
+                    destroy_thing(thing)
 
 
 class MergeLiquids(Reaction):
