@@ -23,7 +23,7 @@ class BoilBoilable(Reaction):
 
     @classmethod
     def perform(cls, event):
-        event.target.tell_room("%s starts boiling!" % event.target.name)
+        event.target.broadcast("%s starts boiling!" % event.target.name)
         event.target.become(Boiling)
 
 
@@ -34,10 +34,10 @@ class BoilOff(Reaction):
     @classmethod
     def perform(cls, event):
         if event.target.size > Size.tiny:
-            event.target.tell_room("Some of %s boils away" % event.target.name)
+            event.target.broadcast("Some of %s boils away" % event.target.name)
             event.target.size -= 1
         else:
-            event.target.tell_room("%s boils away to nothing..." % event.target.name)
+            event.target.broadcast("%s boils away to nothing..." % event.target.name)
             destroy_thing(event.target)
 
 
@@ -49,7 +49,7 @@ class BurnNearby(Reaction):
     def perform(cls, event):
         neighbors = [t for t in event.target.location.things if t != event.target]
         for neighbor in neighbors:
-            event.target.tell_room("%s burns %s" % (event.target.name, neighbor.name))
+            event.target.broadcast("%s burns %s" % (event.target.name, neighbor.name))
 
 
 class CutOpen(Reaction):
@@ -85,7 +85,7 @@ class DissolveIntoLiquid(Reaction):
         liquid_neighbors = [t for t in event.target.location.things if t.is_property(p.Liquid) and are_touching(event.target, t)]
         if liquid_neighbors:
             into = liquid_neighbors[0]
-            event.target.tell_room("%s dissolves into %s" % (event.target.name, into.name))
+            event.target.broadcast("%s dissolves into %s" % (event.target.name, into.name))
             liquid_neighbors[0].transfer_properties(event.target, event.target.get_properties_of_types(['chemical']))
             destroy_thing(event.target)
 
@@ -99,6 +99,7 @@ class ShrinkDigestible(Reaction):
         event.target.unbecome(ShrinkOnEat)
         # Get the owner of the stomach digesting this
         event.digester.tell("The world feels larger somehow...")
+        event.digester.broadcast("%s shrinks!" % event.target.name)
         event.digester.size -= 1
 
 
@@ -114,7 +115,7 @@ class MergeLiquids(Reaction):
         if neighbors:
             neighbor_names = [name for name in map(lambda x: x.name, neighbors) if name != event.target.name]
             if neighbor_names:
-                event.target.tell_room('%s mixes with %s' % (event.target.name, sentence(neighbor_names)))
+                event.target.broadcast('%s mixes with %s' % (event.target.name, sentence(neighbor_names)))
             for neighbor in neighbors:
                 event.target.size = max(event.target.size, neighbor.size)
                 event.target.transfer_properties(neighbor, neighbor.get_properties_of_types(['physical', 'chemical']))
@@ -129,7 +130,7 @@ class WhistleyTeapot(Reaction):
     def perform(cls, event):
         for thing in get_all_contents(event.target):
             if thing.is_property(Boiling):
-                event.target.tell_room("%s begins whistling furiously!" % event.target.name)
+                event.target.broadcast("%s begins whistling furiously!" % event.target.name)
 
 
 class HeatContents(Reaction):
@@ -140,5 +141,5 @@ class HeatContents(Reaction):
     def perform(cls, event):
         for thing in get_all_contents(event.target):
             if not thing.is_property(Hot):
-                thing.tell_room("%s heats up." % thing.name)
+                thing.broadcast("%s heats up." % thing.name)
                 thing.become(Hot)

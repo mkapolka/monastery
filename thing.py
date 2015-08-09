@@ -1,23 +1,26 @@
 import collections
 
 from enums import Size
-from properties.location_properties import LocationProperty, get_visible_things
+from properties.location_properties import LocationProperty, get_visible_locations
 import ui
 
 message_queue = collections.deque()
 
 
-def queue_message(thing, message, to_others):
-    message_queue.append((thing, message, to_others))
+def queue_message(thing, message, to_whom='self'):
+    message_queue.append((thing, thing.location, message, to_whom))
 
 
 def flush_message_queue(player):
-    visible_things = get_visible_things(player)
-    for thing, message, to_others in message_queue:
-        if to_others:
-            if thing in visible_things and thing != player:
+    visible_locations = get_visible_locations(player)
+    for thing, location, message, to_whom in message_queue:
+        if to_whom == 'others':
+            if location in visible_locations and thing != player:
                 ui.message(message)
-        else:
+        elif to_whom == 'room':
+            if location == player.location:
+                ui.message(message)
+        else:  # to_whom == 'self'
             if thing == player:
                 ui.message(message)
     message_queue.clear()
@@ -51,15 +54,13 @@ class Thing(object):
         return '<Thing:%s>' % self.name
 
     def tell(self, message):
-        # if self.is_player:
-            # ui.message(message)
-        queue_message(self, message, False)
+        queue_message(self, message, 'self')
 
     def tell_room(self, message):
-        # for thing in self.location.things:
-            # if thing != self:
-                # thing.tell(message)
-        queue_message(self, message, True)
+        queue_message(self, message, 'room')
+
+    def broadcast(self, message):
+        queue_message(self, message, 'others')
 
     def send_message(self, message_type, *args, **kwargs):
         for prop in self.properties.values():

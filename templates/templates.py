@@ -5,12 +5,11 @@ from enums import Size
 from form import Form
 from properties.forms import Human
 from properties.location_properties import IsContainer, Inventory, HasStomach
-import properties.materials as m
 from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped, Openable
 from thing import Thing
-import ai
 import properties as p
 import properties.location_properties as lp
+import properties.materials as m
 
 
 class LazyTemplate(object):
@@ -41,8 +40,10 @@ def instantiate_template(template):
             for contained_template in contents:
                 thing.get_property(prop).add_thing(instantiate_template(contained_template))
     if template.ai:
+        import ais
+        ai_program = getattr(ais, template.ai)
         thing.ai_context = AIContext(thing)
-        thing.ai = create_ai(template.ai, thing.ai_context)
+        thing.ai = create_ai(ai_program, thing.ai_context)
         thing.ai.begin()
         print thing.ai
     return thing
@@ -117,13 +118,8 @@ class Cat(Template):
     properties = [HasStomach]
     material = m.Flesh
     size = Size.dog
-    contents = {
-        HasStomach: [
-            Apple
-        ]
-    }
 
-    ai = ai.cat_ai
+    ai = 'cat_ai'
 
 
 class Knife(Template):

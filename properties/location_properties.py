@@ -230,13 +230,14 @@ class Inventory(LocationProperty):
     locations_template = {
         'inventory': {
             'name': "Inside %(thing_name)s's backpack",
-            'exits': [{'to': 'outside', 'description': 'Out'}]
+            'exits': [{'to': 'outside', 'description': 'Out'}],
         }
     }
 
     entrances_template = [
         {
             'to': 'inventory',
-            'description': "Into %(thing)s's backpack"
+            'description': "Into %(thing)s's backpack",
+            'traversal_requires': []
         }
     ]

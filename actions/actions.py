@@ -119,6 +119,7 @@ class EatAction(Action):
     @classmethod
     def perform(cls, thing, eater):
         eater.tell("You eat %s" % thing.name)
+        eater.broadcast("%s eats %s" % (eater.name, thing.name))
         eater.get_property(HasStomach).add_thing(thing)
 
 
