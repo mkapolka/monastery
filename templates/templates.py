@@ -45,6 +45,7 @@ def instantiate_template(template):
         thing.ai_context = AIContext(thing)
         thing.ai = create_ai(ai_program, thing.ai_context)
         thing.ai.begin()
+    thing.hp = thing.max_hp
     return thing
 
 
@@ -129,21 +130,21 @@ class Cat(Template):
 class Knife(Template):
     name = "a knife"
     properties = [p.Bladed]
-    size = Size.small
+    size = Size.apple
     material = m.Metal
 
 
 class Mortar(Template):
     name = "A mortar & pestle"
     properties = [MortarShaped]
-    size = Size.small
+    size = Size.apple
     material = m.Stone
 
 
 class Mouse(Template):
     name = 'a field mouse'
     properties = [lp.HasStomach]
-    size = Size.small
+    size = Size.apple
     material = m.Flesh
 
     ai = 'mouse_ai'
@@ -152,7 +153,7 @@ class Mouse(Template):
 class NeedleAndThread(Template):
     name = 'a needle and thread'
     properties = [p.Sews]
-    size = Size.small
+    size = Size.tiny
     material = m.Metal
 
 
@@ -180,7 +181,7 @@ class ShrinkyMushroom(Template):
 class Sponge(Template):
     name = 'a sponge'
     properties = [IsContainer, p.Absorbant]
-    size = Size.small
+    size = Size.apple
     material = m.Plant
 
 

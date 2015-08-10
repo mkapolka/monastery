@@ -40,6 +40,14 @@ def cleanup_thing(thing):
         thing.location.remove_thing(thing)
 
 
+def calc_hp(thing, **changes):
+    size = changes.pop('size', None) or thing.size
+    size_mod = pow(2, size)
+    material = changes.pop('material', None) or thing.material
+    material_hp = material.hp if material else 1
+    return material_hp * size_mod
+
+
 class Thing(object):
     def __init__(self):
         self.name = "A thing"
@@ -54,8 +62,19 @@ class Thing(object):
         self.ai = None
         self.ai_context = None
 
+        self.hp = 0
+
     def __repr__(self):
         return '<Thing:%s>' % self.name
+
+    @property
+    def max_hp(self):
+        return calc_hp(self)
+
+    def attack(self, damage, damage_type):
+        self.hp -= damage
+        if self.hp < 0:
+            self.hp = 0
 
     def tell(self, message):
         queue_message(self, message, 'self')

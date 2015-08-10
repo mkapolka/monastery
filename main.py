@@ -114,6 +114,7 @@ def examine_thing(thing):
         ui.message('  is %s' % sizes[thing.size])
     if thing.material is not None and thing.material.name:
         ui.message('  is made of %s' % thing.material.name)
+    ui.message('  has %s/%s hit points' % (thing.hp, thing.max_hp))
 
     ui.message('')
 
@@ -190,8 +191,7 @@ def iterate():
         things = [t for t in get_accessible_things(player) if t != player]
         choice = letter_prompt(things, 'Take what?', describe_thing_to_player)
         if choice:
-            if can_hold(player, choice):
-                move_thing(player, choice, player.get_property(Inventory).entrances[0])
+            move_thing(player, choice, player.get_property(Inventory).entrances[0])
 
     elif action == 'e':
         accessible_things = [t for t in get_accessible_things(player)]
@@ -214,6 +214,7 @@ def iterate():
             sys.exit()
     tick_world()
     flush_message_queue(player)
+    ui.message("")
 
 
 def game_loop(scr):

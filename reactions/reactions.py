@@ -1,8 +1,10 @@
+import random
+
 from enums import Size
 from properties.location_properties import HasStomach, get_all_contents, are_touching
 from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped, Boiling, Hot
 from reaction import Reaction, enqueue_event, Event
-from thing import destroy_thing
+from thing import destroy_thing, calc_hp
 from utils import sentence
 import properties as p
 
@@ -23,8 +25,9 @@ class BoilBoilable(Reaction):
 
     @classmethod
     def perform(cls, event):
-        event.target.broadcast("%s starts boiling!" % event.target.name)
-        event.target.become(Boiling)
+        if random.random() < .25:
+            event.target.broadcast("%s starts boiling!" % event.target.name)
+            event.target.become(Boiling)
 
 
 class BoilOff(Reaction):
@@ -33,12 +36,14 @@ class BoilOff(Reaction):
 
     @classmethod
     def perform(cls, event):
-        if event.target.size > Size.tiny:
-            event.target.broadcast("Some of %s boils away" % event.target.name)
-            event.target.size -= 1
-        else:
-            event.target.broadcast("%s boils away to nothing..." % event.target.name)
-            destroy_thing(event.target)
+        event.target.attack(max(event.target.max_hp / 10, 1), 'boil')
+        if event.target.hp <= calc_hp(event.target, size=event.target.size - 1):
+            if event.target.size > Size.tiny:
+                event.target.broadcast("Some of %s boils away" % event.target.name)
+                event.target.size -= 1
+            else:
+                event.target.broadcast("%s boils away to nothing..." % event.target.name)
+                destroy_thing(event.target)
 
 
 class BurnNearby(Reaction):
@@ -147,7 +152,7 @@ class WhistleyTeapot(Reaction):
     def perform(cls, event):
         for thing in get_all_contents(event.target):
             if thing.is_property(Boiling):
-                event.target.broadcast("%s begins whistling furiously!" % event.target.name)
+                event.target.broadcast("%s whistles!" % event.target.name)
 
 
 class HeatContents(Reaction):

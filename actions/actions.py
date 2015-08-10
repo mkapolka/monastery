@@ -29,6 +29,7 @@ class CantMoveReason():
     CantTraverse = 2
     CantContain = 3
     CantHold = 4
+    CantAccess = 5
 
 
 def _liquid_holdable(holder, thing):
@@ -45,13 +46,13 @@ def can_hold(holder, thing):
 
 def why_cant_move(mover, thing, entrance):
     if not can_hold(mover, thing):
-        return CantMoveReason.TooBig
+        return CantMoveReason.CantHold
     if not entrance.to_location.can_contain(thing):
         if entrance.to_location.size < thing.size:
             return CantMoveReason.TooBig
         return CantMoveReason.CantContain
-    if not entrance.can_traverse(thing):
-        return CantMoveReason.CantTraverse
+    if not entrance.can_access(mover):
+        return CantMoveReason.CantAccess
     return None
 
 
@@ -59,10 +60,11 @@ def move_thing(mover, thing, entrance):
     cant_move_reason = why_cant_move(mover, thing, entrance)
     if cant_move_reason:
         mover.tell({
+            CantMoveReason.CantHold: "You can't hold %s" % (thing.name),
             CantMoveReason.TooBig: '%s is too big to fit %s' % (thing.name, entrance.to_location.name),
             CantMoveReason.CantTraverse: "%s can't go %s" % (thing.name, entrance.description),
+            CantMoveReason.CantAccess: "%s can't access %s" % (mover.name, entrance.description),
             CantMoveReason.CantContain: "%s can't fit in %s" % (thing.name, entrance.to_location.name),
-            CantMoveReason.CantHold: "You can't move %s" % (thing.name)
         }[cant_move_reason])
     else:
         mover.tell("You move %s %s" % (thing.name, entrance.description))
@@ -142,7 +144,7 @@ class GrindWithPestleAction(Action):
                 grinder.tell("You can't grind a liquid!")
                 return
 
-            if choice.size >= thing.size:
+            if choice.size > thing.size:
                 grinder.tell("%s is too big to grind with %s..." % (choice.name, thing.name))
                 return
 
