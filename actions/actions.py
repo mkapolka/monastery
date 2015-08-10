@@ -150,12 +150,16 @@ class GrindWithPestleAction(Action):
 
             if choice.size <= thing.size:
                 # Grind it
-                grinder.tell("You grind %s into a powder." % choice.name)
-                for prop in choice.get_properties_of_types(['mechanical']):
-                    choice.unbecome(prop.__class__, force=True)
-                # Powder properties TODO: abstract these somewhere?
-                choice.become(Dissolvable)
-                choice.name = 'some powdered %s' % choice.name
+                damage = thing.size
+                choice.attack(damage, 'grind')
+                grinder.tell("You grind %s for %d points of damage" % (choice.name, damage))
+                if choice.health_percentage < .25:
+                    grinder.tell("You grind %s into a powder." % choice.name)
+                    for prop in choice.get_properties_of_types(['mechanical']):
+                        choice.unbecome(prop.__class__, force=True)
+                    # Powder properties TODO: abstract these somewhere?
+                    choice.become(Dissolvable)
+                    choice.name = 'some powdered %s' % choice.name
 
 
 class OpenCloseAction(Action):

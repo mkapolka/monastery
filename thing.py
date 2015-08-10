@@ -71,6 +71,10 @@ class Thing(object):
     def max_hp(self):
         return calc_hp(self)
 
+    @property
+    def health_percentage(self):
+        return float(self.hp) / self.max_hp
+
     def attack(self, damage, damage_type):
         self.hp -= damage
         if self.hp < 0:
