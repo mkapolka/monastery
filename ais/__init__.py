@@ -1,6 +1,6 @@
 import random
 
-from ai import AINode, AIState
+from ai import AINode, AIState, AliasNode
 from properties.location_properties import get_accessible_things
 from templates import instantiate_template
 from utils import pick_random
@@ -230,23 +230,29 @@ class Wait(AINode):
             return AIState.InProgress
 
 
-aliases = {
-    'wander': lambda: (Sequence, (Description, "is wandering"),
-                                 (Random, (Wait, 2), (Wait, 4), (Wait, 6)),
-                                 (Wander,)),
-    'sleep': lambda: (Sequence, (Message, "%(thing)s falls asleep"),
-                                (Description, "is asleep"),
-                                (Random, (Wait, 2), (Wait, 4), (Wait, 6), (Wait, 8), (Wait, 10)),
-                                (Message, "%(thing)s wakes up")),
-    'wander_until_can': lambda thing: (RepeatUntilDone, (Selector, thing,
-                                                         (Fail, (Wander,)),
-                                                         (Fail, (Message, "%(thing)s leers around hungrily"))))
-}
+# Aliases
+class Meander(AliasNode):
+    alias = (Sequence, (Description, "is wandering"),
+                       (Random, (Wait, 2), (Wait, 4), (Wait, 6)),
+                       (Wander,))
 
-cat_ai = (Random, ('wander',),
-                  ('sleep',),
-                  ('wander_until_can', (Eat, lambda ctx, x: x.material == m.Flesh and x.size < ctx.thing.size)))
 
-mouse_ai = (Random, ('wander',),
-                    ('sleep',),
-                    ('wander_until_can', (Nibble, lambda ctx, t: t.material == m.Plant)))
+class Sleep(AliasNode):
+    alias = (Sequence, (Message, "%(thing)s falls asleep"),
+                       (Description, "is asleep"),
+                       (Random, (Wait, 2), (Wait, 4), (Wait, 6), (Wait, 8), (Wait, 10)),
+                       (Message, "%(thing)s wakes up"))
+
+
+class WanderUntilCan(AliasNode):
+    alias = lambda thing: (RepeatUntilDone, (Selector, thing,
+                                             (Fail, (Wander,)),
+                                             (Fail, (Message, "%(thing)s leers around hungrily"))))
+
+cat_ai = (Random, (Meander,),
+                  (Sleep,),
+                  (WanderUntilCan, (Eat, lambda ctx, x: x.material == m.Flesh and x.size < ctx.thing.size)))
+
+mouse_ai = (Random, (Meander,),
+                    (Sleep,),
+                    (WanderUntilCan, (Nibble, lambda ctx, t: t.material == m.Plant)))
