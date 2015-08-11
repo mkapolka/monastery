@@ -131,17 +131,18 @@ class MergeLiquids(Reaction):
 
     @classmethod
     def perform(cls, event):
-        neighbors = [t for t in event.target.location.things if t != event.target
-                     and are_touching(event.target, t)
-                     and t.is_property(p.Liquid)]
-        if neighbors:
-            neighbor_names = [name for name in map(lambda x: x.name, neighbors) if name != event.target.name]
-            if neighbor_names:
-                event.target.broadcast('%s mixes with %s' % (event.target.name, sentence(neighbor_names)))
-            for neighbor in neighbors:
-                event.target.size = max(event.target.size, neighbor.size)
-                event.target.transfer_properties(neighbor, neighbor.get_properties_of_types(['physical', 'chemical']))
-                destroy_thing(neighbor)
+        if not event.target.destroyed:
+            neighbors = [t for t in event.target.location.things if t != event.target
+                         and are_touching(event.target, t)
+                         and t.is_property(p.Liquid)]
+            if neighbors:
+                neighbor_names = [name for name in map(lambda x: x.name, neighbors) if name != event.target.name]
+                if neighbor_names:
+                    event.target.broadcast('%s mixes with %s' % (event.target.name, sentence(neighbor_names)))
+                for neighbor in neighbors:
+                    event.target.size = max(event.target.size, neighbor.size)
+                    event.target.transfer_properties(neighbor, neighbor.get_properties_of_types(['physical', 'chemical']))
+                    destroy_thing(neighbor)
 
 
 class WhistleyTeapot(Reaction):

@@ -42,6 +42,12 @@ class Eat(AINode):
         if self.eaten:
             return self.eaten
 
+        # Check for things already in belly
+        okay = any(t for t in self.thing.get_property(lp.HasStomach).get_all_things() if self.filter_func(t))
+        if okay:
+            self.eaten = AIState.Done
+            return self.eaten
+
         things = [th for th in get_accessible_things(self.thing) if self.filter_func(self.context, th)]
         if things:
             target = pick_random(things)
@@ -159,6 +165,18 @@ class RepeatUntilDone(AINode):
             return result
 
 
+class RoomMatches(AINode):
+    def __init__(self, ctx, room_lambda):
+        super(RoomMatches, self).__init__(ctx)
+        self.filter_func = room_lambda
+
+    def tick(self):
+        if self.filter_func(self.context, self.thing.location):
+            return AIState.Done
+        else:
+            return AIState.Fail
+
+
 class Sequence(AINode):
     def __init__(self, ctx, *tasks):
         self.tasks = tasks
@@ -246,13 +264,14 @@ class Sleep(AliasNode):
 
 class WanderUntilCan(AliasNode):
     alias = lambda thing: (RepeatUntilDone, (Selector, thing,
-                                             (Fail, (Wander,)),
-                                             (Fail, (Message, "%(thing)s leers around hungrily"))))
+                                             (Fail, (Wander,)),))
 
 cat_ai = (Random, (Meander,),
                   (Sleep,),
-                  (WanderUntilCan, (Eat, lambda ctx, x: x.material == m.Flesh and x.size < ctx.thing.size)))
+                  (WanderUntilCan, (Selector, (Eat, lambda ctx, x: x.material == m.Flesh and x.size < ctx.thing.size),
+                                              (Fail, (Message, "%(thing)s leers around hungrily")))))
 
 mouse_ai = (Random, (Meander,),
-                    (Sleep,),
+                    (Sequence, (WanderUntilCan, (RoomMatches, lambda ctx, r: (r.size - ctx.thing.size) <= 3)),
+                               (Sleep,)),
                     (WanderUntilCan, (Nibble, lambda ctx, t: t.material == m.Plant)))

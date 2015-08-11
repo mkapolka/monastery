@@ -142,7 +142,7 @@ class LocationProperty(Property):
         location.add_thing(thing)
 
     def get_all_things(self):
-        return itertools.chain(*[location.things for location in self.locations.values()])
+        return flatten_array(location.things for location in self.locations.values())
 
     def destroy(self):
         names = map(lambda x: x.name, self.get_all_things())
