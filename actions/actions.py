@@ -234,8 +234,7 @@ class SopWringAction(Action):
                 for content in get_all_contents(thing):
                     choice.to_location.add_thing(content)
         else:
-            things = [t for t in get_accessible_things(sopper) if t != thing]
-            choice = choose_target(things, 'Sop what?', ignore=[thing])
+            choice = choose_target(sopper, 'Sop what?', ignore=[thing])
             if choice:
                 if choice.is_property(Liquid):
                     sopper.tell("You sop up %s" % choice.name)
