@@ -1,3 +1,4 @@
+import math
 import random
 
 from enums import Size
@@ -126,7 +127,8 @@ class HealsWoundsRxn(Reaction):
     @classmethod
     def perform(cls, event):
         if event.digester.hp < event.digester.max_hp:
-            event.digester.hp += event.digester.max_hp / 4
+            amount_healed = math.pow(event.target.size, 2) * 4
+            event.digester.hp += amount_healed
             event.digester.tell("You feel your wounds close up")
             event.digester.broadcast("%s looks healthier" % event.digester.name)
 

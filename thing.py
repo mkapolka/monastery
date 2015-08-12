@@ -55,7 +55,7 @@ class Thing(object):
         self.location = None
         self.form = None
         self.material = None
-        self.size = Size.medium
+        self._size = Size.medium
         self.is_player = False
         self.destroyed = False
         self.ai = None
@@ -67,6 +67,26 @@ class Thing(object):
 
     def __repr__(self):
         return '<Thing:%s>' % self.name
+
+    @property
+    def size(self):
+        return self._size
+
+    @size.setter
+    def size(self, value):
+        self._size = value
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
+
+    @property
+    def hp(self):
+        return self._hp
+
+    @hp.setter
+    def hp(self, value):
+        self._hp = value
+        if self._hp > self.max_hp:
+            self._hp = self.max_hp
 
     @property
     def max_hp(self):
@@ -97,6 +117,19 @@ class Thing(object):
 
     def broadcast(self, message):
         queue_message(self, message, 'others')
+
+    def duplicate(self):
+        """
+        This handles several things incorrectly. Location properties and AIs primarily.
+        TODO: Revisit
+        """
+        output = Thing()
+        for key, value in self.__dict__.items():
+            if key not in ['properties', 'ai', 'ai_context', 'location']:
+                output.__dict__[key] = value
+        for key, value in self.properties.items():
+            output.properties[key] = value.clone(output)
+        return output
 
     def send_message(self, message_type, *args, **kwargs):
         for prop in self.properties.values():
@@ -169,8 +202,8 @@ class Thing(object):
         ])
 
         for prop in properties:
-            if prop.key not in self.properties.keys():
-                self.properties[prop.key] = prop
+            if prop.key() not in self.properties.keys():
+                self.properties[prop.key()] = prop
                 prop.thing = self
 
     def get_properties_of_types(self, types):

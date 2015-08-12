@@ -2,6 +2,7 @@ import math
 import random
 
 from action import Action
+from enums import Size
 from location import PropertyLocation
 from properties import Immobile, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
 from properties.location_properties import get_accessible_things, get_all_locations, entrances_to_thing, get_all_contents
@@ -120,8 +121,16 @@ class DrinkAction(Action):
 
     @classmethod
     def perform(cls, thing, drinker):
-        drinker.tell("You drink %s" % thing.name)
-        drinker.get_property(HasStomach).add_thing(thing)
+        # Split the thing into two sizes
+        if thing.size <= Size.apple:
+            drinker.get_property(HasStomach).add_thing(thing)
+            drinker.tell("You drink the rest of %s" % thing.name)
+        else:
+            bolus = thing.duplicate()
+            bolus.size -= 1
+            thing.size -= 1
+            drinker.get_property(HasStomach).add_thing(bolus)
+            drinker.tell("You drink from %s" % thing.name)
 
 
 class EatAction(Action):
