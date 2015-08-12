@@ -1,6 +1,4 @@
 import collections
-import random
-
 from enums import Size
 from properties.location_properties import LocationProperty, get_visible_locations
 import ui
@@ -86,19 +84,6 @@ class Thing(object):
         if was_alive and not self.alive:
             self.broadcast("%s dies" % self.name)
             self.tell("You die...")
-
-    def attack_other_with(self, other, weapon=None):
-        weapon_damage = weapon.damage if weapon else self.damage
-        material = weapon.material if weapon else self.material
-        mat_damage_mod = material.damage_mod if material else 1
-        size_mod = self.size
-        attack_type = weapon.damage_type if weapon else self.damage_type
-
-        damage = int(random.randint(1, weapon_damage) * size_mod * mat_damage_mod)
-
-        self.tell("You %s %s for %d damage." % (attack_type, other.name, damage))
-        self.broadcast("%s %ss %s for %d damage." % (self.name, attack_type, other.name, damage))
-        other.attack(damage, attack_type, self)
 
     @property
     def alive(self):

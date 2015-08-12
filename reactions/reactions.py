@@ -69,7 +69,7 @@ class CutOpen(Reaction):
             thing = event.target
             thing.become(p.Open, custom_description='has been slashed open')
             thing.unbecome(p.Openable)
-            event.performer.tell("You slash open %s!" % thing.name)
+            event.attacker.tell("You slash open %s!" % thing.name)
 
 
 class DigestContents(Reaction):

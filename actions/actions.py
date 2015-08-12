@@ -1,4 +1,5 @@
 import math
+import random
 
 from action import Action
 from location import PropertyLocation
@@ -26,7 +27,7 @@ def choose_target(performer, prompt, filter_func=None, ignore=None):
     return letter_prompt(choices, prompt, describe_to_performer)
 
 
-class CantMoveReason():
+class CantMoveReason(object):
     TooBig = 1
     CantTraverse = 2
     CantContain = 3
@@ -73,6 +74,21 @@ def move_thing(mover, thing, entrance):
         entrance.to_location.add_thing(thing)
 
 
+def attack_with_weapon(attacker, target, weapon):
+    weapon_damage = weapon.damage if weapon else attacker.damage
+    material = weapon.material if weapon else attacker.material
+    mat_damage_mod = material.damage_mod if material else 1
+    size_mod = attacker.size
+    attack_type = weapon.damage_type if weapon else attacker.damage_type
+
+    damage = int(random.randint(1, weapon_damage) * size_mod * mat_damage_mod)
+
+    attacker.tell("You %s %s for %d damage." % (attack_type, target.name, damage))
+    attacker.broadcast("%s %ss %s for %d damage." % (attacker.name, attack_type, target.name, damage))
+    target.attack(damage, attack_type, attacker)
+    enqueue_event(Event(attack_type, target, attacker=attacker, weapon=weapon, damage=damage))
+
+
 class CutAction(Action):
     prereq = p.Bladed
 
@@ -88,9 +104,7 @@ class CutAction(Action):
     def perform(cls, thing, cutter):
         target = choose_target(cutter, 'Cut what?', ignore=[thing])
         if target:
-            # cutter.tell("You slash at %s..." % target.name)
-            # enqueue_event(Event('slash', target, cutter, negative_message='...but nothing happens'))
-            cutter.attack_other_with(target, thing)
+            attack_with_weapon(cutter, target, thing)
 
 
 class DrinkAction(Action):

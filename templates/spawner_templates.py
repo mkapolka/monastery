@@ -8,4 +8,4 @@ class MouseHole(Template):
     name = 'a mouse nest'
     properties = [sp.SpawnsMice]
     size = Size.small
-    material = m.Plant
+    material = m.Wood
