@@ -103,13 +103,13 @@ class Thing(object):
             prop.receive_message(message_type, *args, **kwargs)
 
     def __get_property(self, property_class):
-        return self.properties.get(property_class.key, None)
+        return self.properties.get(property_class.key(), None)
 
     def __add_property(self, property):
-        self.properties[property.key] = property
+        self.properties[property.key()] = property
 
     def __remove_property(self, property):
-        del self.properties[property.key]
+        del self.properties[property.key()]
         property.destroy()
         property.thing = None
 

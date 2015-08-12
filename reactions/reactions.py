@@ -119,6 +119,18 @@ class HeatContents(Reaction):
                 thing.become(Hot)
 
 
+class HealsWoundsRxn(Reaction):
+    predicates = [p.HealsWounds]
+    event = "digest"
+
+    @classmethod
+    def perform(cls, event):
+        if event.digester.hp < event.digester.max_hp:
+            event.digester.hp += event.digester.max_hp / 4
+            event.digester.tell("You feel your wounds close up")
+            event.digester.broadcast("%s looks healthier" % event.digester.name)
+
+
 class Rot(Reaction):
     predicates = [p.Decomposable]
     event = "tick"
@@ -152,18 +164,18 @@ class ShrinkDigestible(Reaction):
                     destroy_thing(thing)
 
 
-class SpawnMice(Reaction):
-    predicates = [sp.SpawnsMice]
+class SpawnThings(Reaction):
+    predicates = [sp.Spawner]
     event = "tick"
 
     @classmethod
     def perform(cls, event):
-        prop = event.target.get_property(sp.SpawnsMice)
+        prop = event.target.get_property(sp.Spawner)
         if random.random() < .25 and len(prop.spawned_things) < prop.max_things:
             created = instantiate_template(sp.SpawnsMice.template)
             prop.add_thing(created)
             event.target.location.add_thing(created)
-            event.target.tell_room("%s crawls out of %s" % (created.name, event.target.name))
+            event.target.broadcast(prop.spawn_message % {'thing': created.name, 'me': event.target.name})
 
 
 class MergeLiquids(Reaction):

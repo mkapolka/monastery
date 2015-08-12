@@ -105,8 +105,8 @@ def examine_thing(thing):
         Size.seed: 'about the size of a seed',
         Size.apple: 'about the size of an apple',
         Size.teapot: 'about the size of an teapot',
-        Size.dog: 'about the size of a dog',
-        Size.stool: 'about the size of a stool',
+        Size.cat: 'about the size of a cat',
+        Size.child: 'about the size of a small child',
         Size.person: 'about the size of a person',
         Size.armoire: 'about the size of a armoire',
     }

@@ -114,7 +114,7 @@ class Barrel(Template):
 class Bucket(Template):
     name = "a bucket"
     properties = [lp.IsContainer, p.Open]
-    size = Size.stool
+    size = Size.child
     material = m.Wood
 
     contents = {
@@ -128,7 +128,7 @@ class Cat(Template):
     name = "A dozy cat"
     properties = [HasStomach]
     material = m.Flesh
-    size = Size.dog
+    size = Size.cat
 
     ai = 'cat_ai'
 
@@ -169,7 +169,7 @@ class Oven(Template):
     name = "An oven"
     properties = [IsContainer, Hot, p.Open, p.Immobile]
     material = m.Metal
-    size = Size.stool
+    size = Size.child
 
 
 class Player(Template):
@@ -209,7 +209,7 @@ class TeaKettle(Template):
 
 class Table(Template):
     name = "a table"
-    size = Size.stool
+    size = Size.child
     properties = [lp.Surface]
     material = m.Wood
 
@@ -223,7 +223,7 @@ class Table(Template):
 class Water(Template):
     name = "some water"
     size = Size.small
-    properties = [p.Liquid, p.Boilable]
+    properties = [p.Liquid, p.Boilable, p.Digestible]
 
 
 class Well(Template):
@@ -236,3 +236,10 @@ class Well(Template):
             Water
         ]
     }
+
+
+class WillowRoot(Template):
+    name = "a knotted willow root"
+    size = Size.apple
+    properties = [p.HealsWounds, p.Digestible]
+    material = m.Wood

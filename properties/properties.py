@@ -61,6 +61,11 @@ class Heavy(Property):
     description = 'is heavy'
 
 
+class HealsWounds(Property):
+    types = ['chemical']
+    description = 'heals wounds'
+
+
 class Hot(Property):
     types = []
     description = 'is hot'

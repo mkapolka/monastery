@@ -1,10 +1,15 @@
 from property import Property
 import templates as t
 
+
 class Spawner(Property):
     types = []
     description = 'will spawn things'
     template = None
+
+    @classmethod
+    def key(self):
+        return 'Spawner'
 
     def __init__(self, *args, **kwargs):
         super(Spawner, self).__init__(*args, **kwargs)
@@ -27,3 +32,5 @@ class SpawnsMice(Spawner):
     description = 'spawns mice'
     template = t.Mouse
     max_things = 1
+
+    spawn_message = '%(thing)s crawls out of %(me)s'
