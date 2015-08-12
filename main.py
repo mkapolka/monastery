@@ -147,7 +147,7 @@ def thing_name_with_location(thing):
 def process_ais(world):
     things = world.get_all_things()
     for thing in things:
-        if thing.ai:
+        if thing.alive and thing.ai:
             result = thing.ai.tick()
             if result != AIState.InProgress:
                 thing.ai.begin()

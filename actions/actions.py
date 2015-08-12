@@ -1,3 +1,5 @@
+import math
+
 from action import Action
 from location import PropertyLocation
 from properties import Immobile, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
@@ -150,7 +152,7 @@ class GrindWithPestleAction(Action):
 
             if choice.size <= thing.size:
                 # Grind it
-                damage = thing.size
+                damage = math.pow(thing.size, 2)
                 choice.attack(damage, 'grind')
                 grinder.tell("You grind %s for %d points of damage" % (choice.name, damage))
                 if choice.health_percentage < .25:

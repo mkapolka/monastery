@@ -76,9 +76,12 @@ class Thing(object):
         return float(self.hp) / self.max_hp
 
     def attack(self, damage, damage_type):
+        was_alive = self.alive
         self.hp -= damage
         if self.hp < 0:
             self.hp = 0
+        if was_alive and not self.alive:
+            self.broadcast("%s dies" % self.name)
 
     @property
     def alive(self):
