@@ -80,6 +80,10 @@ class Thing(object):
         if self.hp < 0:
             self.hp = 0
 
+    @property
+    def alive(self):
+        return self.ai is not None and self.hp > self.max_hp / 2
+
     def tell(self, message):
         queue_message(self, message, 'self')
 

@@ -6,7 +6,9 @@ from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped,
 from reaction import Reaction, enqueue_event, Event
 from thing import destroy_thing, calc_hp
 from utils import sentence
+from templates import instantiate_template
 import properties as p
+import properties.spawner as sp
 
 
 class AlightWhenBurned(Reaction):
@@ -123,6 +125,20 @@ class ShrinkDigestible(Reaction):
                     thing.tell_room("%s winks out of existence!" % thing.name)
                     thing.tell("You wink out of existence!")
                     destroy_thing(thing)
+
+
+class SpawnMice(Reaction):
+    predicates = [sp.SpawnsMice]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        prop = event.target.get_property(sp.SpawnsMice)
+        if random.random() < .25 and len(prop.spawned_things) < prop.max_things:
+            created = instantiate_template(sp.SpawnsMice.template)
+            prop.add_thing(created)
+            event.target.location.add_thing(created)
+            event.target.tell_room("%s crawls out of %s" % (created.name, event.target.name))
 
 
 class MergeLiquids(Reaction):

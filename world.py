@@ -3,13 +3,14 @@ import itertools
 from location import Location, StaticExit
 from templates.templates import Oven, Barrel, Mortar, Cat, instantiate_template
 import templates as t
+import templates.spawner_templates as st
 from utils import flatten_array
 
 places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
         "exits": ["monastery_kitchen"],
-        "things": [Cat, t.Well]
+        "things": [Cat, t.Well, st.MouseHole]
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
