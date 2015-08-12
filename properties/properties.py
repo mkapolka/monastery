@@ -26,6 +26,11 @@ class Burning(Property):
     description = 'is burning'
 
 
+class Decomposable(Property):
+    types = ['physical']
+    description = 'will rot'
+
+
 class Dissolvable(Property):
     types = ['physical', 'mechanical']
     description = 'can be dissolved into water'

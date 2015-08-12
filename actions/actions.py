@@ -88,8 +88,9 @@ class CutAction(Action):
     def perform(cls, thing, cutter):
         target = choose_target(cutter, 'Cut what?', ignore=[thing])
         if target:
-            cutter.tell("You slash at %s..." % target.name)
-            enqueue_event(Event('slash', target, cutter, negative_message='...but nothing happens'))
+            # cutter.tell("You slash at %s..." % target.name)
+            # enqueue_event(Event('slash', target, cutter, negative_message='...but nothing happens'))
+            cutter.attack_other_with(target, thing)
 
 
 class DrinkAction(Action):

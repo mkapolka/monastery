@@ -107,6 +107,31 @@ class DissolveIntoLiquid(Reaction):
             destroy_thing(event.target)
 
 
+class HeatContents(Reaction):
+    predicates = [Hot]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        for thing in get_all_contents(event.target):
+            if not thing.is_property(Hot):
+                thing.broadcast("%s heats up." % thing.name)
+                thing.become(Hot)
+
+
+class Rot(Reaction):
+    predicates = [p.Decomposable]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        if not event.target.alive:
+            event.target.hp -= 1
+            if event.target.hp <= 0:
+                event.target.broadcast("%s decomposes into nothing" % (event.target.name))
+                destroy_thing(event.target)
+
+
 class ShrinkDigestible(Reaction):
     predicates = [ShrinkOnEat]
     event = "digest"
@@ -170,15 +195,3 @@ class WhistleyTeapot(Reaction):
         for thing in get_all_contents(event.target):
             if thing.is_property(Boiling):
                 event.target.broadcast("%s whistles!" % event.target.name)
-
-
-class HeatContents(Reaction):
-    predicates = [Hot]
-    event = "tick"
-
-    @classmethod
-    def perform(cls, event):
-        for thing in get_all_contents(event.target):
-            if not thing.is_property(Hot):
-                thing.broadcast("%s heats up." % thing.name)
-                thing.become(Hot)

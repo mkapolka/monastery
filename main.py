@@ -169,45 +169,43 @@ def tick_world():
 def iterate():
     ui.refresh()
     action = ui.get_char()
-    if action == 'g':
-        all_exits = player.location.get_all_exits()
-        # filter out exits that can't be accessed
-        all_exits = [
-            e for e in all_exits if e.can_traverse(player) and e.to_location.can_contain(player)
-        ]
-        which_exit = letter_prompt(all_exits, "Go where?", lambda x: x.description)
-        if which_exit:
-            ui.message("")
-            player.tell("You go %s...\n" % which_exit.description)
-            which_exit.to_location.add_thing(player)
-            describe_location(player.location)
-    elif action == 'd':
-        action_prompt_v1()
-        # action_prompt_v2()
-    elif action == 'm':
-        move_prompt()
-    elif action == 't':
-        # Take prompt
-        things = [t for t in get_accessible_things(player) if t != player]
-        choice = letter_prompt(things, 'Take what?', describe_thing_to_player)
-        if choice:
-            move_thing(player, choice, player.get_property(Inventory).entrances[0])
+    if player.alive:
+        if action == 'g':
+            all_exits = player.location.get_all_exits()
+            # filter out exits that can't be accessed
+            all_exits = [
+                e for e in all_exits if e.can_traverse(player) and e.to_location.can_contain(player)
+            ]
+            which_exit = letter_prompt(all_exits, "Go where?", lambda x: x.description)
+            if which_exit:
+                ui.message("")
+                player.tell("You go %s...\n" % which_exit.description)
+                which_exit.to_location.add_thing(player)
+                describe_location(player.location)
+        elif action == 'd':
+            action_prompt_v1()
+            # action_prompt_v2()
+        elif action == 'm':
+            move_prompt()
+        elif action == 't':
+            # Take prompt
+            things = [t for t in get_accessible_things(player) if t != player]
+            choice = letter_prompt(things, 'Take what?', describe_thing_to_player)
+            if choice:
+                move_thing(player, choice, player.get_property(Inventory).entrances[0])
 
-    elif action == 'e':
-        accessible_things = [t for t in get_accessible_things(player)]
-        choice = letter_prompt(accessible_things, 'Examine what?', thing_name_with_location)
-        if choice:
-            ui.message('')
-            examine_thing(choice)
-    elif action == 'i':
-        describe_location(player.get_property(Inventory).locations.values()[0])
-    elif action == 'l':
-        describe_location(player.location)
-    elif action == 'w':
+        elif action == 'e':
+            accessible_things = [t for t in get_accessible_things(player)]
+            choice = letter_prompt(accessible_things, 'Examine what?', thing_name_with_location)
+            if choice:
+                ui.message('')
+                examine_thing(choice)
+        elif action == 'i':
+            describe_location(player.get_property(Inventory).locations.values()[0])
+        elif action == 'l':
+            describe_location(player.location)
+    if action == 'w':
         ui.message("time passes...")
-    elif action == 'pdb':
-        import pdb
-        pdb.set_trace()
     elif action == 'ESC':
         response = ui.prompt("Really quit?", [('y', 'Yes', True), ('n', 'No', False)])
         if response:

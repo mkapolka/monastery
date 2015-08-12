@@ -33,6 +33,12 @@ def instantiate_template(template):
     thing.set_form(template.form)
     thing.set_material(template.material)
     thing.size = template.size
+
+    if hasattr(template, 'damage'):
+        thing.damage = template.damage
+    if hasattr(template, 'damage_type'):
+        thing.damage_type = template.damage_type
+
     for prop in template.properties:
         thing.become(prop)
     if hasattr(template, 'contents'):
@@ -132,6 +138,8 @@ class Knife(Template):
     properties = [p.Bladed]
     size = Size.apple
     material = m.Metal
+    damage = 4
+    damage_type = 'slash'
 
 
 class Mortar(Template):

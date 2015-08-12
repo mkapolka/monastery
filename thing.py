@@ -1,4 +1,5 @@
 import collections
+import random
 
 from enums import Size
 from properties.location_properties import LocationProperty, get_visible_locations
@@ -63,6 +64,8 @@ class Thing(object):
         self.ai_context = None
 
         self.hp = 0
+        self.base_damage = 1
+        self.damage_type = 'bludgeon'
 
     def __repr__(self):
         return '<Thing:%s>' % self.name
@@ -75,17 +78,31 @@ class Thing(object):
     def health_percentage(self):
         return float(self.hp) / self.max_hp
 
-    def attack(self, damage, damage_type):
+    def attack(self, damage, damage_type, aggressor=None):
         was_alive = self.alive
         self.hp -= damage
         if self.hp < 0:
             self.hp = 0
         if was_alive and not self.alive:
             self.broadcast("%s dies" % self.name)
+            self.tell("You die...")
+
+    def attack_other_with(self, other, weapon=None):
+        weapon_damage = weapon.damage if weapon else self.damage
+        material = weapon.material if weapon else self.material
+        mat_damage_mod = material.damage_mod if material else 1
+        size_mod = self.size
+        attack_type = weapon.damage_type if weapon else self.damage_type
+
+        damage = int(random.randint(1, weapon_damage) * size_mod * mat_damage_mod)
+
+        self.tell("You %s %s for %d damage." % (attack_type, other.name, damage))
+        self.broadcast("%s %ss %s for %d damage." % (self.name, attack_type, other.name, damage))
+        other.attack(damage, attack_type, self)
 
     @property
     def alive(self):
-        return self.ai is not None and self.hp > self.max_hp / 2
+        return (self.ai is not None or self.is_player) and self.hp > self.max_hp / 2
 
     def tell(self, message):
         queue_message(self, message, 'self')
