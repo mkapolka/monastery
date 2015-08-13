@@ -75,7 +75,7 @@ def move_thing(mover, thing, entrance):
         entrance.to_location.add_thing(thing)
 
 
-def attack_with_weapon(attacker, target, weapon):
+def attack(attacker, target, weapon=None):
     weapon_damage = weapon.damage if weapon else attacker.damage
     material = weapon.material if weapon else attacker.material
     mat_damage_mod = material.damage_mod if material else 1
@@ -105,7 +105,7 @@ class CutAction(Action):
     def perform(cls, thing, cutter):
         target = choose_target(cutter, 'Cut what?', ignore=[thing])
         if target:
-            attack_with_weapon(cutter, target, thing)
+            attack(cutter, target, thing)
 
 
 class DrinkAction(Action):

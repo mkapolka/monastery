@@ -62,7 +62,7 @@ class Thing(object):
         self.ai_context = None
 
         self.hp = 0
-        self.base_damage = 1
+        self.damage = 1
         self.damage_type = 'bludgeon'
 
     def __repr__(self):

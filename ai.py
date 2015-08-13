@@ -16,6 +16,7 @@ class AIContext(object):
 
         self.aggressors = []
         self.friends = []
+        self.targets = []
 
 
 class AINode(object):

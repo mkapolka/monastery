@@ -129,6 +129,8 @@ class Cat(Template):
     properties = [HasStomach]
     material = m.Flesh
     size = Size.cat
+    damage = 2
+    damage_type = 'slash'
 
     ai = 'cat_ai'
 
@@ -243,3 +245,10 @@ class WillowRoot(Template):
     size = Size.apple
     properties = [p.HealsWounds, p.Digestible]
     material = m.Wood
+
+
+class Wolf(Template):
+    name = "a wolf"
+    size = Size.child
+    material = m.Flesh
+    ai = 'wolf_ai'

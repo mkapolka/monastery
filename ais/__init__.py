@@ -1,6 +1,7 @@
 import random
 
 from ai import AINode, AIState, AliasNode
+from actions import attack
 from properties.location_properties import get_accessible_things
 from templates import instantiate_template
 from utils import pick_random
@@ -9,6 +10,76 @@ import actions as a
 import properties.materials as m
 import properties as p
 import templates as t
+
+
+def do_once(func):
+    def inner(*args, **kwargs):
+        self = args[0]
+        rvalue = getattr(self, '__retval', None)
+        if rvalue:
+            return rvalue
+
+        new_rvalue = func(*args, **kwargs)
+        if new_rvalue != AIState.InProgress:
+            self.__retval = new_rvalue
+        return new_rvalue
+    return inner
+
+
+class DoOnceNode(AINode):
+    # AIState equivalent for "I did this action, it took my turn, but i
+    # completed it and next time don't tick me
+    Completed = 'completed'
+
+    def __init__(self, ctx, *args, **kwargs):
+        super(DoOnceNode, self).__init__(ctx, *args, **kwargs)
+        self.cached_result = None
+
+    def begin(self):
+        self.cached_result = None
+
+    def tick(self):
+        if self.cached_result is not None:
+            return self.cached_result
+
+        rvalue = self.perform()
+
+        if rvalue == DoOnceNode.Completed:
+            self.cached_result = AIState.Done
+            return AIState.InProgress
+
+        if rvalue != AIState.InProgress:
+            self.cached_result = rvalue
+
+        return rvalue
+
+    def perform(self):
+        raise NotImplementedError()
+
+
+class AddNearbyTargets(AINode):
+    def __init__(self, ctx, func):
+        super(AddNearbyTargets, self).__init__(ctx)
+        self.func = func
+
+    def tick(self):
+        for thing in get_accessible_things(self.thing):
+            if self.func(self.context, thing) and thing not in self.context.targets:
+                self.context.targets.append(thing)
+        return AIState.Done
+
+
+class AttackTargets(DoOnceNode):
+    def perform(self):
+        accessible_things = get_accessible_things(self.thing)
+        accessible_targets = [
+            t for t in self.context.targets if t in accessible_things
+        ]
+        if accessible_targets:
+            t = accessible_targets[0]
+            attack(self.thing, t)
+            return DoOnceNode.Completed
+        return AIState.Fail
 
 
 class Description(AINode):
@@ -27,35 +98,26 @@ class Description(AINode):
         return AIState.Done
 
 
-class Eat(AINode):
+class Eat(DoOnceNode):
     def __init__(self, ctx, filter_func):
         super(Eat, self).__init__(ctx)
         self.filter_func = filter_func
 
-    def begin(self):
-        self.eaten = False
-
-    def tick(self):
+    def perform(self):
         if not self.thing.is_property(lp.HasStomach):
             return AIState.Fail
-
-        if self.eaten:
-            return self.eaten
 
         # Check for things already in belly
         okay = any(t for t in self.thing.get_property(lp.HasStomach).get_all_things() if self.filter_func(t))
         if okay:
-            self.eaten = AIState.Done
-            return self.eaten
+            return AIState.Done
 
         things = [th for th in get_accessible_things(self.thing) if self.filter_func(self.context, th)]
         if things:
             target = pick_random(things)
             if a.EatAction.can_perform(target, self.thing):
                 a.EatAction.perform(target, self.thing)
-                self.eaten = AIState.Done
-                return AIState.InProgress
-        self.eaten = AIState.Fail
+                return DoOnceNode.Completed
         return AIState.Fail
 
 
@@ -73,20 +135,23 @@ class Fail(AINode):
         return AIState.Fail
 
 
-class Message(AINode):
+class FilterTargets(AINode):
+    def __init__(self, ctx, func):
+        super(FilterTargets, self).__init__(ctx, func)
+        self.func = func
+
+    def tick(self):
+        self.context.targets = filter(self.context.targets, self.func)
+        return AIState.Done
+
+
+class Message(DoOnceNode):
     def __init__(self, ctx, message, to_whom='others'):
         super(Message, self).__init__(ctx)
         self.message = message
         self.to_whom = to_whom
-        self.fired = False
 
-    def begin(self):
-        self.fired = False
-
-    def tick(self):
-        if self.fired:
-            return AIState.Done
-
+    def perform(self):
         message = self.message % self.get_parameters()
         if self.to_whom == 'self':
             self.thing.tell(message)
@@ -94,7 +159,6 @@ class Message(AINode):
             self.thing.tell_room(message)
         else:
             self.thing.broadcast(message)
-        self.fired = True
         return AIState.Done
 
     def get_parameters(self):
@@ -103,20 +167,14 @@ class Message(AINode):
         }
 
 
-class Nibble(AINode):
+class Nibble(DoOnceNode):
     def __init__(self, ctx, filter_func):
         super(Nibble, self).__init__(ctx)
         self.filter_func = filter_func
 
-    def begin(self):
-        self.nibbled = False
-
-    def tick(self):
+    def perform(self):
         if not self.thing.is_property(lp.HasStomach):
             return AIState.Fail
-
-        if self.nibbled:
-            return AIState.Done
 
         things = [th for th in get_accessible_things(self.thing) if self.filter_func(self.context, th)]
         if things:
@@ -128,8 +186,7 @@ class Nibble(AINode):
             for key, prop in nibble_target.properties.items():
                 bolus.properties[key] = prop.clone(bolus)
             self.thing.get_property(lp.HasStomach).add_thing(bolus)
-            self.nibbled = True
-            return AIState.InProgress
+            return DoOnceNode.Completed
         return AIState.Fail
 
 
@@ -210,6 +267,25 @@ class Selector(AINode):
         return AIState.Fail
 
 
+class TargetNearby(AINode):
+    def __init__(self, ctx, func):
+        super(TargetNearby, self).__init__(ctx)
+        self.func = func
+
+    @do_once
+    def tick(self):
+        pass
+
+
+class Test(AINode):
+    def __init__(self, ctx, func):
+        super(Test, self).__init__(ctx)
+        self.func = func
+
+    def tick(self):
+        return AIState.Done if self.func(self.context) else AIState.Fail
+
+
 class Wander(AINode):
     def begin(self):
         self.has_wandered = False
@@ -229,6 +305,20 @@ class Wander(AINode):
             return AIState.InProgress
         else:
             return AIState.Error
+
+
+class WithFocus(AINode):
+    def __init__(self, ctx, chooser, subnode):
+        super(WithFocus, self).__init__(ctx)
+        self.subnode = subnode
+        self.chooser = chooser
+
+    def begin(self):
+        self.context.focus_target = self.chooser(self.context.targets)
+
+    def tick(self):
+        # self.context.focus_target
+        pass
 
 
 class Wait(AINode):
@@ -266,9 +356,18 @@ class WanderUntilCan(AliasNode):
     alias = lambda thing: (RepeatUntilDone, (Selector, thing,
                                              (Fail, (Wander,)),))
 
+
+def is_tasty_to_cat(ctx, thing):
+    return thing.material == m.Flesh and thing.size < ctx.thing.size
+
+
 cat_ai = (Random, (Meander,),
                   (Sleep,),
-                  (WanderUntilCan, (Selector, (Eat, lambda ctx, x: x.material == m.Flesh and x.size < ctx.thing.size),
+                  (Sequence, (AddNearbyTargets, is_tasty_to_cat),
+                             (RepeatUntilDone, (Sequence, (AttackTargets,),
+                                                          (Test, lambda ctx: not ctx.targets[0].alive))),
+                             (Eat, lambda ctx, x: not x.alive and x in ctx.targets)),
+                  (WanderUntilCan, (Selector, (Eat, is_tasty_to_cat),
                                               (Fail, (Message, "%(thing)s leers around hungrily")))))
 
 mouse_ai = (Random, (Meander,),
