@@ -1,7 +1,7 @@
 import random
 
 from ai import AINode, AIState, AliasNode
-from actions import attack
+from actions import attack, walk_thing
 from properties.location_properties import get_accessible_things
 from templates import instantiate_template
 from utils import pick_random
@@ -69,16 +69,23 @@ class AddNearbyTargets(AINode):
         return AIState.Done
 
 
-class AttackTargets(DoOnceNode):
-    def perform(self):
-        accessible_things = get_accessible_things(self.thing)
-        accessible_targets = [
-            t for t in self.context.targets if t in accessible_things
-        ]
-        if accessible_targets:
-            t = accessible_targets[0]
-            attack(self.thing, t)
-            return DoOnceNode.Completed
+class AttackTargets(AINode):
+    def tick(self):
+        target = None
+        if self.context.focus_target:
+            target = self.context.focus_target
+        else:
+            accessible_things = get_accessible_things(self.thing)
+            accessible_targets = [
+                t for t in self.context.targets if t in accessible_things
+            ]
+            if accessible_targets:
+                target = accessible_targets[0]
+        if target:
+            if not target.alive:
+                return AIState.Done
+            attack(self.thing, target)
+            return AIState.InProgress
         return AIState.Fail
 
 
@@ -165,6 +172,27 @@ class Message(DoOnceNode):
         return {
             'thing': self.thing.name
         }
+
+
+class MoveToRoom(AINode):
+    def __init__(self, ctx, room_func):
+        super(MoveToRoom, self).__init__(ctx)
+        self.room_func = room_func
+
+    def tick(self):
+        room = self.room_func(self.context)
+        if not room:
+            return AIState.Fail
+
+        if self.thing.location == room:
+            return AIState.Done
+        else:
+            exit = next((t for t in self.thing.location.get_all_exits() if t.to_location == room), None)
+            if exit:
+                walk_thing(self.thing, exit)
+                return AIState.InProgress
+            else:
+                return AIState.Fail
 
 
 class Nibble(DoOnceNode):
@@ -267,16 +295,6 @@ class Selector(AINode):
         return AIState.Fail
 
 
-class TargetNearby(AINode):
-    def __init__(self, ctx, func):
-        super(TargetNearby, self).__init__(ctx)
-        self.func = func
-
-    @do_once
-    def tick(self):
-        pass
-
-
 class Test(AINode):
     def __init__(self, ctx, func):
         super(Test, self).__init__(ctx)
@@ -297,10 +315,7 @@ class Wander(AINode):
         entrances = [e for e in self.thing.location.get_all_exits() if e.can_traverse(self.thing)]
         if entrances:
             entrance = entrances[random.randint(0, len(entrances) - 1)]
-            from_location = self.thing.location
-            self.thing.tell_room("%s goes %s" % (self.thing.name, entrance.description))
-            entrance.to_location.add_thing(self.thing)
-            self.thing.tell_room("%s arrives from %s" % (self.thing.name, from_location.name))
+            walk_thing(self.thing, entrance)
             self.has_wandered = True
             return AIState.InProgress
         else:
@@ -312,13 +327,26 @@ class WithFocus(AINode):
         super(WithFocus, self).__init__(ctx)
         self.subnode = subnode
         self.chooser = chooser
+        self.focus_target = None
 
     def begin(self):
-        self.context.focus_target = self.chooser(self.context.targets)
+        self.focus_target = None
 
     def tick(self):
-        # self.context.focus_target
-        pass
+
+        if not self.focus_target:
+            things = filter(lambda x: not x.destroyed, get_accessible_things(self.thing))
+            target = self.chooser(self.context, things)
+            self.focus_target = target
+            if not target:
+                return AIState.Fail
+        else:
+            if self.focus_target.destroyed:
+                self.focus_target = None
+                self.context.focus_target = None
+                return AIState.Fail
+        self.context.focus_target = self.focus_target
+        return self.subnode.tick()
 
 
 class Wait(AINode):
@@ -357,16 +385,22 @@ class WanderUntilCan(AliasNode):
                                              (Fail, (Wander,)),))
 
 
+class Hunt(AliasNode):
+    alias = lambda ffunc: (Selector, (WithFocus, lambda ctx, options: next((o for o in options if ffunc(ctx, o)), None),
+                                      (Sequence,
+                                          (MoveToRoom, lambda ctx: ctx.focus_target.location),
+                                          (AttackTargets,))),
+                                     (Fail, (Wander,)))
+
+
 def is_tasty_to_cat(ctx, thing):
     return thing.material == m.Flesh and thing.size < ctx.thing.size
 
 
 cat_ai = (Random, (Meander,),
                   (Sleep,),
-                  (Sequence, (AddNearbyTargets, is_tasty_to_cat),
-                             (RepeatUntilDone, (Sequence, (AttackTargets,),
-                                                          (Test, lambda ctx: not ctx.targets[0].alive))),
-                             (Eat, lambda ctx, x: not x.alive and x in ctx.targets)),
+                  (Sequence, (Hunt, is_tasty_to_cat),
+                             (Eat, lambda ctx, t: not t.alive and is_tasty_to_cat(ctx, t))),
                   (WanderUntilCan, (Selector, (Eat, is_tasty_to_cat),
                                               (Fail, (Message, "%(thing)s leers around hungrily")))))
 

@@ -49,14 +49,15 @@ def can_hold(holder, thing):
 
 
 def why_cant_move(mover, thing, entrance):
-    if not can_hold(mover, thing):
-        return CantMoveReason.CantHold
+    if mover:
+        if not can_hold(mover, thing):
+            return CantMoveReason.CantHold
+        if not entrance.can_access(mover):
+            return CantMoveReason.CantAccess
     if not entrance.to_location.can_contain(thing):
         if entrance.to_location.size < thing.size:
             return CantMoveReason.TooBig
         return CantMoveReason.CantContain
-    if not entrance.can_access(mover):
-        return CantMoveReason.CantAccess
     return None
 
 
@@ -73,6 +74,17 @@ def move_thing(mover, thing, entrance):
     else:
         mover.tell("You move %s %s" % (thing.name, entrance.description))
         entrance.to_location.add_thing(thing)
+
+
+def walk_thing(thing, entrance):
+    why_cant_walk = why_cant_move(None, thing, entrance)
+    if why_cant_walk:
+        thing.tell("You can't go there.")
+    else:
+        thing.tell("You walk %s" % entrance.description)
+        thing.tell_room("%s goes %s" % (thing.name, entrance.description))
+        entrance.to_location.add_thing(thing)
+        thing.tell_room("%s arrives from %s" % (thing.name, entrance.from_location.name))
 
 
 def attack(attacker, target, weapon=None):

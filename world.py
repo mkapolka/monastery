@@ -9,7 +9,7 @@ from utils import flatten_array
 places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
-        "exits": ["monastery_kitchen", "outside_monastery"],
+        "exits": ["monastery_kitchen"],# , "outside_monastery"],
         "things": [Cat, t.Well, st.MouseHole]
     },
     "monastery_kitchen": {
