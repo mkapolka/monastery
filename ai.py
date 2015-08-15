@@ -17,6 +17,7 @@ class AIContext(object):
         self.aggressors = []
         self.friends = []
         self.targets = []
+        self.home = None
         self.focus_target = None
 
 

@@ -60,15 +60,17 @@ class Template(object):
     form = None
     material = None
     ai = None
+    properties = []
 
 
-class CustomTemplate(Template):
+class CustomTemplate(object):
     def __init__(self, base, **kwargs):
         self.base = base
         self.custom_fields = kwargs
 
     def __getattr__(self, key):
-        if key in self.custom_fields:
+        print key, key in self.custom_fields.keys()
+        if key in self.custom_fields.keys():
             return self.custom_fields[key]
         else:
             return getattr(self.base, key)

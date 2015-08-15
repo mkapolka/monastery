@@ -1,4 +1,24 @@
+import collections
+
 from enums import Size
+
+
+def get_path(from_location, to_location, thing):
+    if from_location == to_location:
+        return []
+    seen_nodes = [from_location]
+    queue = collections.deque([([], e.to_location) for e in from_location.get_all_exits() if e.can_traverse(thing)])
+    while len(queue) > 0:
+        so_far, next_loc = queue.popleft()
+        seen_nodes.append(next_loc)
+        if next_loc == to_location:
+            return so_far + [next_loc]
+        else:
+            queue.extend([
+                (so_far + [next_loc], e.to_location) for e in next_loc.get_all_exits()
+                if e.can_traverse(thing) and e.to_location not in seen_nodes
+            ])
+    return None
 
 
 class Location(object):

@@ -9,7 +9,7 @@ from utils import flatten_array
 places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
-        "exits": ["monastery_kitchen"],# , "outside_monastery"],
+        "exits": ["monastery_kitchen", "outside_monastery"],
         "things": [Cat, t.Well, st.MouseHole]
     },
     "monastery_kitchen": {
@@ -45,7 +45,9 @@ places = {
     "wolf_den": {
         "name": "the wolves' den",
         "exits": ["thicket"],
-        "things": []
+        "things": [t.CustomTemplate(t.Wolf, name='a white wolf'),
+                   t.CustomTemplate(t.Wolf, name='a grey wolf'),
+                   t.CustomTemplate(t.Wolf, name='a black wolf')]
     }
 }
 
@@ -56,7 +58,10 @@ def make_locations(places):
         output[key] = Location()
         output[key].name = value['name']
         for thing_class in value.get('things', []):
-            output[key].add_thing(instantiate_template(thing_class))
+            thing = instantiate_template(thing_class)
+            if thing.ai_context and not thing.ai_context.home:
+                thing.ai_context.home = output[key]
+            output[key].add_thing(thing)
 
     for key, value in places.items():
         for exit_id in value['exits']:

@@ -2,6 +2,7 @@ import random
 
 from ai import AINode, AIState, AliasNode
 from actions import attack, walk_thing
+from location import get_path
 from properties.location_properties import get_accessible_things
 from templates import instantiate_template
 from utils import pick_random
@@ -152,6 +153,34 @@ class FilterTargets(AINode):
         return AIState.Done
 
 
+class Go(AINode):
+    def __init__(self, ctx, getty):
+        super(Go, self).__init__(ctx)
+        self.getty = getty
+        self.destination = None
+
+    def begin(self):
+        self.destination = self.getty(self.context)
+
+    def tick(self):
+        if not self.destination:
+            return AIState.Fail
+        if self.thing.location == self.destination:
+            return AIState.Done
+        path = get_path(self.thing.location, self.destination, self.thing)
+        if path is None:
+            return AIState.Fail
+        elif path == []:
+            return AIState.Done
+        else:
+            exit = next((e for e in self.thing.location.get_all_exits() if e.to_location == path[0]), None)
+            if exit:
+                walk_thing(self.thing, exit)
+                return AIState.InProgress
+            else:
+                return AIState.Fail
+
+
 class Message(DoOnceNode):
     def __init__(self, ctx, message, to_whom='others'):
         super(Message, self).__init__(ctx)
@@ -172,27 +201,6 @@ class Message(DoOnceNode):
         return {
             'thing': self.thing.name
         }
-
-
-class MoveToRoom(AINode):
-    def __init__(self, ctx, room_func):
-        super(MoveToRoom, self).__init__(ctx)
-        self.room_func = room_func
-
-    def tick(self):
-        room = self.room_func(self.context)
-        if not room:
-            return AIState.Fail
-
-        if self.thing.location == room:
-            return AIState.Done
-        else:
-            exit = next((t for t in self.thing.location.get_all_exits() if t.to_location == room), None)
-            if exit:
-                walk_thing(self.thing, exit)
-                return AIState.InProgress
-            else:
-                return AIState.Fail
 
 
 class Nibble(DoOnceNode):
@@ -388,7 +396,7 @@ class WanderUntilCan(AliasNode):
 class Hunt(AliasNode):
     alias = lambda ffunc: (Selector, (WithFocus, lambda ctx, options: next((o for o in options if ffunc(ctx, o)), None),
                                       (Sequence,
-                                          (MoveToRoom, lambda ctx: ctx.focus_target.location),
+                                          (Go, lambda ctx: ctx.focus_target.location),
                                           (AttackTargets,))),
                                      (Fail, (Wander,)))
 
@@ -408,3 +416,8 @@ mouse_ai = (Random, (Meander,),
                     (Sequence, (WanderUntilCan, (RoomMatches, lambda ctx, r: (r.size - ctx.thing.size) <= 3)),
                                (Sleep,)),
                     (WanderUntilCan, (Nibble, lambda ctx, t: t.material == m.Plant)))
+
+wolf_ai = (Random, (Sequence, (Meander,), (Meander,), (Meander,)),
+                   (Sequence, (Go, lambda ctx: ctx.home),
+                              (Sleep,)),
+                   (Hunt, is_tasty_to_cat))
