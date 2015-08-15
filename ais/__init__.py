@@ -2,7 +2,7 @@ import random
 
 from ai import AINode, AIState, AliasNode
 from actions import attack, walk_thing
-from location import get_path
+from location import get_path, locations_within
 from properties.location_properties import get_accessible_things
 from templates import instantiate_template
 from utils import pick_random
@@ -159,10 +159,8 @@ class Go(AINode):
         self.getty = getty
         self.destination = None
 
-    def begin(self):
-        self.destination = self.getty(self.context)
-
     def tick(self):
+        self.destination = self.getty(self.context)
         if not self.destination:
             return AIState.Fail
         if self.thing.location == self.destination:
@@ -216,12 +214,11 @@ class Nibble(DoOnceNode):
         if things:
             nibble_target = pick_random(things)
             self.thing.broadcast("%s nibbles on %s" % (self.thing.name, nibble_target.name))
-            bolus = instantiate_template(t.Bolus)
+            bolus = instantiate_template(t.Bolus, self.thing.get_property(lp.HasStomach))
             bolus.name = 'a %s bolus' % nibble_target.material.name
             bolus.become(p.Digestible)
             for key, prop in nibble_target.properties.items():
                 bolus.properties[key] = prop.clone(bolus)
-            self.thing.get_property(lp.HasStomach).add_thing(bolus)
             return DoOnceNode.Completed
         return AIState.Fail
 
@@ -268,6 +265,51 @@ class RoomMatches(AINode):
             return AIState.Done
         else:
             return AIState.Fail
+
+
+class Search(AINode):
+    def __init__(self, ctx, done_func, max_distance=10):
+        super(Search, self).__init__(ctx)
+        self.done_func = done_func
+        self.max_distance = max_distance
+        self.searched_rooms = []
+        self.next_room = None
+
+    def begin(self):
+        self.searched_rooms = []
+        self.rooms_to_search = locations_within(self.thing.location, self.max_distance, self.thing)
+        self.next_room = pick_random(self.rooms_to_search)
+
+    def tick(self):
+        if self.thing.location not in self.searched_rooms:
+            self.searched_rooms.append(self.thing.location)
+        if self.thing.location in self.rooms_to_search:
+            self.rooms_to_search.remove(self.thing.location)
+
+        if self.done_func(self.context):
+            return AIState.Done
+        elif not self.rooms_to_search:
+            return AIState.Fail
+        else:
+            next_leg = None
+            while not next_leg:
+                path_to_next = get_path(self.thing.location, self.next_room, self.thing)
+                if path_to_next:
+                    next_leg = path_to_next[0]
+                else:  # either already in target room or else no path to target room
+                    if self.next_room in self.rooms_to_search:
+                        self.rooms_to_search.remove(self.next_room)
+                    if self.rooms_to_search:
+                        self.next_room = pick_random(self.rooms_to_search)
+                    else:  # Out of rooms
+                        return AIState.Fail
+            next_exits = [
+                e for e in self.thing.location.get_all_exits()
+                if e.can_traverse(self.thing) and e.to_location == next_leg
+            ]
+            if next_exits:
+                walk_thing(self.thing, next_exits[0])
+                return AIState.InProgress
 
 
 class Sequence(AINode):
@@ -341,7 +383,6 @@ class WithFocus(AINode):
         self.focus_target = None
 
     def tick(self):
-
         if not self.focus_target:
             things = filter(lambda x: not x.destroyed, get_accessible_things(self.thing))
             target = self.chooser(self.context, things)
@@ -396,9 +437,9 @@ class WanderUntilCan(AliasNode):
 class Hunt(AliasNode):
     alias = lambda ffunc: (Selector, (WithFocus, lambda ctx, options: next((o for o in options if ffunc(ctx, o)), None),
                                       (Sequence,
-                                          (Go, lambda ctx: ctx.focus_target.location),
-                                          (AttackTargets,))),
-                                     (Fail, (Wander,)))
+                                       (Go, lambda ctx: ctx.focus_target.location),
+                                       (AttackTargets,))),
+                                     (Search, lambda ctx: any([t for t in ctx.thing.location.things if ffunc(ctx, t)])))
 
 
 def is_tasty_to_cat(ctx, thing):

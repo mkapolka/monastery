@@ -27,12 +27,13 @@ def lazy(template_name):
     return LazyTemplate(template_name)
 
 
-def instantiate_template(template):
+def instantiate_template(template, location):
     thing = Thing()
     thing.name = template.name
     thing.set_form(template.form)
     thing.set_material(template.material)
     thing.size = template.size
+    location.add_thing(thing)
 
     if hasattr(template, 'damage'):
         thing.damage = template.damage
@@ -44,14 +45,14 @@ def instantiate_template(template):
     if hasattr(template, 'contents'):
         for prop, contents in template.contents.items():
             for contained_template in contents:
-                thing.get_property(prop).add_thing(instantiate_template(contained_template))
+                instantiate_template(contained_template, thing.get_property(prop))
+    thing.hp = thing.max_hp
     if template.ai:
         import ais
         ai_program = getattr(ais, template.ai)
         thing.ai_context = AIContext(thing)
         thing.ai = create_ai(ai_program, thing.ai_context)
         thing.ai.begin()
-    thing.hp = thing.max_hp
     return thing
 
 
@@ -69,7 +70,6 @@ class CustomTemplate(object):
         self.custom_fields = kwargs
 
     def __getattr__(self, key):
-        print key, key in self.custom_fields.keys()
         if key in self.custom_fields.keys():
             return self.custom_fields[key]
         else:
@@ -254,3 +254,6 @@ class Wolf(Template):
     size = Size.child
     material = m.Flesh
     ai = 'wolf_ai'
+
+    damage = 10
+    damage_type = 'slash'

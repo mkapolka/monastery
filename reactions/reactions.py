@@ -174,8 +174,7 @@ class SpawnThings(Reaction):
     def perform(cls, event):
         prop = event.target.get_property(sp.Spawner)
         if random.random() < .25 and len(prop.spawned_things) < prop.max_things:
-            created = instantiate_template(sp.SpawnsMice.template)
-            prop.add_thing(created)
+            created = instantiate_template(sp.SpawnsMice.template, prop)
             event.target.location.add_thing(created)
             event.target.broadcast(prop.spawn_message % {'thing': created.name, 'me': event.target.name})
 

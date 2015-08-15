@@ -57,15 +57,17 @@ def make_locations(places):
     for key, value in places.items():
         output[key] = Location()
         output[key].name = value['name']
-        for thing_class in value.get('things', []):
-            thing = instantiate_template(thing_class)
-            if thing.ai_context and not thing.ai_context.home:
-                thing.ai_context.home = output[key]
-            output[key].add_thing(thing)
 
     for key, value in places.items():
         for exit_id in value['exits']:
             output[key].exits.append(StaticExit(output[key], output[exit_id]))
+
+    for key, value in places.items():
+        for thing_class in value.get('things', []):
+            thing = instantiate_template(thing_class, output[key])
+            if thing.ai_context and not thing.ai_context.home:
+                thing.ai_context.home = output[key]
+            output[key].add_thing(thing)
 
     return output
 

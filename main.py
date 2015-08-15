@@ -12,10 +12,9 @@ from utils import letter_prompt
 from world import World
 import ui
 
-player = instantiate_template(Player)
-player.is_player = True
 world = World()
-world.locations['monastery_kitchen'].add_thing(player)
+player = instantiate_template(Player, world.locations['monastery_kitchen'])
+player.is_player = True
 
 
 def describe_thing_to_player(thing):
@@ -144,6 +143,13 @@ def thing_name_with_location(thing):
         return "%s (%s)" % (thing.name, thing.location.name)
 
 
+def begin_ais(world):
+    things = world.get_all_things()
+    for thing in things:
+        if thing.alive and thing.ai:
+            thing.ai.begin()
+
+
 def process_ais(world):
     things = world.get_all_things()
     for thing in things:
@@ -217,6 +223,7 @@ def iterate():
 
 def game_loop(scr):
     ui.init(scr)
+    begin_ais(world)
     describe_location(player.location)
     while True:
         try:

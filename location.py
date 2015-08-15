@@ -21,6 +21,22 @@ def get_path(from_location, to_location, thing):
     return None
 
 
+def locations_within(from_location, max_distance, thing):
+    locations = [from_location]
+    to_visit = collections.deque((1, e.to_location) for e in from_location.get_all_exits() if e.can_traverse(thing))
+    while len(to_visit) > 0:
+        distance, location = to_visit.popleft()
+        locations.append(location)
+        if distance < max_distance:
+            to_visit.extend((distance + 1, e.to_location) for e in location.get_all_exits()
+                            if e.can_traverse(thing) and e.to_location not in locations)
+    return locations
+
+
+def path_distance(from_location, to_location, thing):
+    return len(get_path(from_location, to_location, thing))
+
+
 class Location(object):
     def __init__(self):
         self.things = []

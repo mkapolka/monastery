@@ -301,8 +301,7 @@ class WellAction(Action):
             elif not any(map(lambda x: x.can_access(opener), entrances_to_thing(container))):
                 opener.tell("%s can't hold liquids..." % container.name)
             else:
-                water = t.instantiate_template(t.Water)
                 location = get_all_locations(container)[0]
-                location.add_thing(water)
+                water = t.instantiate_template(t.Water, location)
                 water.size = location.size
                 opener.tell("You fill %s with water." % container.name)
