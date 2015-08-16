@@ -153,6 +153,22 @@ class FilterTargets(AINode):
         return AIState.Done
 
 
+class Gas(DoOnceNode):
+    def perform(self):
+        liquid_things = [t for t in self.thing.location.things if t.is_property(p.Liquid)]
+        thing = pick_random(liquid_things)
+        if thing:
+            gas = thing.duplicate()
+            gas.remove_properties_of_types(['mechanical', 'physical'])
+            gas.become(p.Gas)
+            gas.name = 'some mist'
+            self.thing.location.add_thing(gas)
+            self.thing.broadcast("%s takes a big gulp of %s and burps it out as a mist" % (self.thing.name, thing.name))
+            self.thing.tell("You take a gulp of %s and belch it out as mist" % thing.name)
+            return DoOnceNode.Completed
+        return AIState.Fail
+
+
 class Go(AINode):
     def __init__(self, ctx, getty):
         super(Go, self).__init__(ctx)
@@ -461,4 +477,15 @@ mouse_ai = (Random, (Meander,),
 wolf_ai = (Random, (Sequence, (Meander,), (Meander,), (Meander,)),
                    (Sequence, (Go, lambda ctx: ctx.home),
                               (Sleep,)),
-                   (Hunt, is_tasty_to_cat))
+                   (Sequence, (Hunt, is_tasty_to_cat),
+                              (Eat, is_tasty_to_cat)))
+
+
+def location_contains_liquid(context):
+    location = context.thing.location
+    return bool([t for t in location.things if t.is_property(p.Liquid)])
+
+
+frog_ai = (Sequence, (Search, location_contains_liquid),
+                     (Random, (Sleep,),
+                              (Gas,)))

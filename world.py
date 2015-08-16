@@ -1,15 +1,18 @@
 import itertools
+import re
 
 from location import Location, StaticExit
 from templates.templates import Oven, Barrel, Mortar, Cat, instantiate_template
 import templates as t
 import templates.spawner_templates as st
+import properties.spawner as sp
+import properties as p
 from utils import flatten_array
 
 places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
-        "exits": ["monastery_kitchen", "outside_monastery"],
+        "exits": ["monastery_kitchen", "forest_outside_monastery"],
         "things": [Cat, t.Well, st.MouseHole]
     },
     "monastery_kitchen": {
@@ -27,24 +30,29 @@ places = {
         "exits": ["monastery_kitchen"],
         "things": [t.ShrinkyMushroom, t.Bucket, t.Sponge, t.Mouse]
     },
-    "outside_monastery": {
+    "forest_outside_monastery": {
         "name": "along the bright trail",
-        "exits": ["monastery_garden", "creekbed"],
+        "exits": ["monastery_garden", "forest_creekbed"],
         "things": []
     },
-    "creekbed": {
+    "forest_creekbed": {
         "name": "a dry creekbed",
-        "exits": ["outside_monastery", "thicket"],
+        "exits": ["forest_outside_monastery", "forest_thicket"],
         "things": [t.WillowRoot]
     },
-    "thicket": {
+    "forest_thicket": {
         "name": "a thorny thicket",
-        "exits": ["creekbed", "wolf_den"],
-        "things": [t.WillowRoot]
+        "exits": ["forest_creekbed", "forest_wolf_den", "forest_pond"],
+        "things": [t.WillowRoot, t.Thistle]
     },
-    "wolf_den": {
+    "forest_pond": {
+        "name": "a smelly pool",
+        "exits": ["forest_thicket"],
+        "things": [t.CustomTemplate(t.Water, name='some fetid water', properties_append=[sp.SpawnsFrogs, p.Poisonous])],
+    },
+    "forest_wolf_den": {
         "name": "the wolves' den",
-        "exits": ["thicket"],
+        "exits": ["forest_thicket"],
         "things": [t.CustomTemplate(t.Wolf, name='a white wolf'),
                    t.CustomTemplate(t.Wolf, name='a grey wolf'),
                    t.CustomTemplate(t.Wolf, name='a black wolf')]
@@ -57,6 +65,8 @@ def make_locations(places):
     for key, value in places.items():
         output[key] = Location()
         output[key].name = value['name']
+        zone = re.search('(\w+)_', value['name'])
+        output[key].zone = zone
 
     for key, value in places.items():
         for exit_id in value['exits']:

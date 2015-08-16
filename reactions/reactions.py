@@ -49,6 +49,18 @@ class BoilOff(Reaction):
                 destroy_thing(event.target)
 
 
+class Breathe(Reaction):
+    predicates = [p.Breathes]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        gassy_things = [t for t in event.target.location.things if t.is_property(p.Gas)]
+        if gassy_things:
+            for thing in gassy_things:
+                enqueue_event(Event("ingest", thing, ingester=event.target))
+
+
 class BurnNearby(Reaction):
     predicates = [Burning]
     event = "tick"
@@ -80,18 +92,27 @@ class DigestContents(Reaction):
     @classmethod
     def perform(cls, event):
         contents = event.target.get_property(HasStomach).get_all_things()
+        damage = event.target.size * 3
         for thing in contents:
-            enqueue_event(Event("digest", thing, digester=event.target))
+            thing.attack(damage, 'digest')
+            enqueue_event(Event("ingest", thing, ingester=event.target))
+            if thing.hp <= 0:
+                thing.tell("You are digested into an insubstantial mush")
+                thing.broadcast("%s is digested into an insubstantial mush" % thing.name)
+                destroy_thing(thing)
 
 
-class DigestDigestibles(Reaction):
-    predicates = [p.Digestible]
-    event = "digest"
+class DissipateGas(Reaction):
+    predicates = [p.Gas]
+    event = "tick"
 
     @classmethod
     def perform(cls, event):
-        event.target.tell_room("%s dissolves into mush" % event.target.name)
-        destroy_thing(event.target)
+        event.target.hp -= max(event.target.max_hp / 10, 1)
+        if event.target.hp <= 0:
+            event.target.broadcast("%s dissipates into nothing." % event.target.name)
+            event.target.tell("You dissipate into nothing.")
+            destroy_thing(event.target)
 
 
 class DissolveIntoLiquid(Reaction):
@@ -122,15 +143,50 @@ class HeatContents(Reaction):
 
 class HealsWoundsRxn(Reaction):
     predicates = [p.HealsWounds]
-    event = "digest"
+    event = "ingest"
 
     @classmethod
     def perform(cls, event):
-        if event.digester.hp < event.digester.max_hp:
+        if event.ingester.hp < event.ingester.max_hp:
             amount_healed = math.pow(event.target.size, 2) * 4
-            event.digester.hp += amount_healed
-            event.digester.tell("You feel your wounds close up")
-            event.digester.broadcast("%s looks healthier" % event.digester.name)
+            event.ingester.hp += amount_healed
+            event.ingester.tell("You feel your wounds close up")
+            event.ingester.broadcast("%s looks healthier" % event.ingester.name)
+
+
+class IngestPoison(Reaction):
+    predicates = [p.Poisonous]
+    event = "ingest"
+
+    @classmethod
+    def perform(cls, event):
+        if not event.ingester.is_property(p.Poisoned) and not event.ingester.is_property(p.PoisonImmune):
+            event.ingester.become(p.Poisoned)
+            event.ingester.broadcast("%s is poisoned by %s" % (event.ingester.name, event.target.name))
+            event.ingester.tell("You are poisoned by %s" % event.target.name)
+
+
+class IngestAntidote(Reaction):
+    predicates = [p.Antidote]
+    event = 'ingest'
+
+    @classmethod
+    def perform(cls, event):
+        if event.ingester.is_property(p.Poisoned):
+            event.ingester.unbecome(p.Poisoned)
+            event.ingester.tell("%s cures you of your poison." % event.target.name)
+            event.ingester.broadcast("%s cures %s of their poison." % (event.target.name, event.ingester.name))
+
+
+class Poison(Reaction):
+    predicates = [p.Poisoned]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        damage = max(event.target.max_hp / 20, 1)
+        event.target.tell("The poison damages you for %d damage" % damage)
+        event.target.attack(damage, 'poison')
 
 
 class Rot(Reaction):
@@ -141,24 +197,24 @@ class Rot(Reaction):
     def perform(cls, event):
         if not event.target.alive:
             event.target.hp -= 1
-            if event.target.hp <= 0:
+            if event.target.hp <= 0 and random.random() < .1:
                 event.target.broadcast("%s decomposes into nothing" % (event.target.name))
                 destroy_thing(event.target)
 
 
 class ShrinkDigestible(Reaction):
     predicates = [ShrinkOnEat]
-    event = "digest"
+    event = "ingest"
 
     @classmethod
     def perform(cls, event):
-        if event.digester.size > Size.small:
+        if event.ingester.size > Size.small:
             event.target.unbecome(ShrinkOnEat)
             # Get the owner of the stomach digesting this
-            event.digester.tell("The world feels larger somehow...")
-            event.digester.broadcast("%s shrinks!" % event.digester.name)
-            event.digester.size -= 1
-            for thing in get_all_contents(event.digester):
+            event.ingester.tell("The world feels larger somehow...")
+            event.ingester.broadcast("%s shrinks!" % event.ingester.name)
+            event.ingester.size -= 1
+            for thing in get_all_contents(event.ingester):
                 thing.size -= 1
                 if thing.size < 0:
                     thing.tell_room("%s winks out of existence!" % thing.name)
@@ -174,8 +230,8 @@ class SpawnThings(Reaction):
     def perform(cls, event):
         prop = event.target.get_property(sp.Spawner)
         if random.random() < .25 and len(prop.spawned_things) < prop.max_things:
-            created = instantiate_template(sp.SpawnsMice.template, prop)
-            event.target.location.add_thing(created)
+            created = instantiate_template(prop.template, event.target.location)
+            prop.spawned_things.append(created)
             event.target.broadcast(prop.spawn_message % {'thing': created.name, 'me': event.target.name})
 
 
@@ -187,8 +243,26 @@ class MergeLiquids(Reaction):
     def perform(cls, event):
         if not event.target.destroyed:
             neighbors = [t for t in event.target.location.things if t != event.target
-                         and are_touching(event.target, t)
                          and t.is_property(p.Liquid)]
+            if neighbors:
+                neighbor_names = [name for name in map(lambda x: x.name, neighbors) if name != event.target.name]
+                if neighbor_names:
+                    event.target.broadcast('%s mixes with %s' % (event.target.name, sentence(neighbor_names)))
+                for neighbor in neighbors:
+                    event.target.size = max(event.target.size, neighbor.size)
+                    event.target.transfer_properties(neighbor, neighbor.get_properties_of_types(['physical', 'chemical']))
+                    destroy_thing(neighbor)
+
+
+class MergeGasses(Reaction):
+    predicates = [p.Gas]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        if not event.target.destroyed:
+            neighbors = [t for t in event.target.location.things if t != event.target
+                         and t.is_property(p.Gas)]
             if neighbors:
                 neighbor_names = [name for name in map(lambda x: x.name, neighbors) if name != event.target.name]
                 if neighbor_names:

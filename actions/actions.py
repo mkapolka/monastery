@@ -45,6 +45,7 @@ def _liquid_holdable(holder, thing):
 def can_hold(holder, thing):
     return not thing.is_property(Immobile) and \
         (not thing.is_property(Liquid) or _liquid_holdable(holder, thing)) and \
+        not thing.is_property(p.Gas) and \
         thing.size < holder.size
 
 
@@ -219,6 +220,29 @@ class OpenCloseAction(Action):
         else:
             opener.tell("You open %s" % thing.name)
             thing.become(Open)
+
+
+class PinchAction(Action):
+    prereq = p.Pinchable
+
+    @classmethod
+    def describe(cls, thing):
+        return 'Pinch a sprig off of %s' % thing.name
+
+    @classmethod
+    def can_perform(cls, thing, pincher):
+        return True
+
+    @classmethod
+    def perform(cls, thing, pincher):
+        sprig = thing.duplicate()
+        sprig.remove_properties_of_types(['mechanical'])
+        sprig.name = 'a sprig of %s' % thing.name
+        sprig.size = Size.apple
+        if pincher.is_property(lp.Inventory):
+            pincher.get_property(lp.Inventory).add_thing(sprig)
+        pincher.tell("You pinch off a sprig from %s" % thing.name)
+        pincher.broadcast("%s pinches off a sprig from %s" % (pincher.name, thing.name))
 
 
 class SewAction(Action):

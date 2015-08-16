@@ -1,9 +1,7 @@
-from properties import *
-from location_properties import *
 from form import Form
+import properties as p
+import location_properties as lp
 
-class Teapot(Form):
-    properties = [IsContainer, Openable]
 
-class Human(Form):
-    properties = [HasStomach]
+class Creature(Form):
+    properties = [lp.HasStomach, p.Breathes]

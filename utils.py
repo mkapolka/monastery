@@ -5,7 +5,9 @@ import ui
 
 
 def pick_random(ary):
-    return ary[random.randint(0, len(ary) - 1)]
+    if ary:
+        return ary[random.randint(0, len(ary) - 1)]
+    return None
 
 
 def number_prompt(options, prompt, str_func):

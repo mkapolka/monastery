@@ -13,7 +13,7 @@ from world import World
 import ui
 
 world = World()
-player = instantiate_template(Player, world.locations['monastery_kitchen'])
+player = instantiate_template(Player, world.locations['forest_thicket'])
 player.is_player = True
 
 

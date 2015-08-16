@@ -32,6 +32,6 @@ class Flesh(Material):
 
 class Plant(Material):
     name = 'plant matter'
-    properties = [p.Flammable, p.Phlogiston, p.Decomposable]
+    properties = [p.Flammable, p.Phlogiston]
     hp = 2
     damage_mod = .1

@@ -6,6 +6,11 @@ class Absorbant(Property):
     description = 'is absorbant'
 
 
+class Antidote(Property):
+    types = ['chemical']
+    description = 'cures poison'
+
+
 class Bladed(Property):
     types = ["mechanical"]
     description = 'is bladed'
@@ -24,6 +29,11 @@ class Boilable(Property):
 class Burning(Property):
     types = []
     description = 'is burning'
+
+
+class Breathes(Property):
+    types = ['mechanical']
+    description = 'breathes'
 
 
 class Decomposable(Property):
@@ -51,6 +61,11 @@ class Flammable(Property):
     description = 'is flammable'
 
 
+class Gas(Property):
+    types = ['mechanical']
+    description = 'is gaseous'
+
+
 class Hard(Property):
     types = ['physical']
     description = 'is hard'
@@ -72,7 +87,7 @@ class Hot(Property):
 
 
 class Immobile(Property):
-    types = []
+    types = ['mechanical']
     description = 'cannot be moved'
 
 
@@ -95,9 +110,29 @@ class Openable(Property):
     description = 'can be opened'
 
 
+class Pinchable(Property):
+    types = ['mechanical']
+    description = 'has leaves that can be pinched off'
+
+
 class Phlogiston(Property):
     types = ['physical']
     description = 'will be consumed by fire'
+
+
+class PoisonImmune(Property):
+    types = ['physical']
+    description = 'is immune to poison'
+
+
+class Poisonous(Property):
+    types = ['chemical']
+    description = 'is poisonous'
+
+
+class Poisoned(Property):
+    types = ['mechanical', 'physical', 'wound']
+    description = 'is poisoned'
 
 
 class Sews(Property):

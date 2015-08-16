@@ -44,6 +44,7 @@ class Location(object):
         # Static exits for rooms
         self.exits = []
         self._size = Size.room
+        self.zone = ''
 
     def __repr__(self):
         return '<Location:"%s">' % self.name
@@ -56,7 +57,7 @@ class Location(object):
         return True
 
     def add_thing(self, thing):
-        if thing.location is not None:
+        if thing.location is not None and thing in thing.location.things:
             thing.location.things.remove(thing)
 
         if object not in self.things:

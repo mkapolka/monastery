@@ -3,12 +3,12 @@ import sys
 from ai import create_ai, AIContext
 from enums import Size
 from form import Form
-from properties.forms import Human
-from properties.location_properties import IsContainer, Inventory, HasStomach
+from properties.location_properties import IsContainer, Inventory
 from properties.properties import Edible, ShrinkOnEat, Hot, TeapotShaped, MortarShaped, Openable
 from thing import Thing
 import properties as p
 import properties.location_properties as lp
+import properties.forms as f
 import properties.materials as m
 
 
@@ -70,6 +70,10 @@ class CustomTemplate(object):
         self.custom_fields = kwargs
 
     def __getattr__(self, key):
+        if key == 'properties':
+            if 'properties_append' in self.custom_fields:
+                return getattr(self.base, 'properties') + self.custom_fields['properties_append']
+            return getattr(self.base, 'properties')
         if key in self.custom_fields.keys():
             return self.custom_fields[key]
         else:
@@ -128,13 +132,28 @@ class Bucket(Template):
 
 class Cat(Template):
     name = "A dozy cat"
-    properties = [HasStomach]
+    form = f.Creature
     material = m.Flesh
     size = Size.cat
     damage = 2
     damage_type = 'slash'
 
     ai = 'cat_ai'
+
+
+class Frog(Template):
+    name = 'a gassy frog'
+    material = m.Flesh
+    properties = [p.PoisonImmune]
+    size = Size.apple
+    ai = 'frog_ai'
+    form = f.Creature
+
+
+class Gas(Template):
+    name = 'some gas'
+    size = Size.large
+    properties = [p.Gas]
 
 
 class Knife(Template):
@@ -155,7 +174,7 @@ class Mortar(Template):
 
 class Mouse(Template):
     name = 'a field mouse'
-    properties = [lp.HasStomach]
+    form = f.Creature
     size = Size.apple
     material = m.Flesh
 
@@ -179,7 +198,7 @@ class Oven(Template):
 class Player(Template):
     name = "The player"
     properties = [Inventory]
-    form = Human
+    form = f.Creature
     material = m.Flesh
 
 
@@ -224,6 +243,13 @@ class Table(Template):
     }
 
 
+class Thistle(Template):
+    name = 'a milk thistle bush'
+    properties = [p.Antidote, p.Immobile, p.Pinchable, p.Edible]
+    material = m.Plant
+    size = Size.medium
+
+
 class Water(Template):
     name = "some water"
     size = Size.small
@@ -252,6 +278,7 @@ class WillowRoot(Template):
 class Wolf(Template):
     name = "a wolf"
     size = Size.child
+    form = f.Creature
     material = m.Flesh
     ai = 'wolf_ai'
 

@@ -125,8 +125,9 @@ class Thing(object):
         """
         output = Thing()
         for key, value in self.__dict__.items():
-            if key not in ['properties', 'ai', 'ai_context', 'location']:
+            if key not in ['properties', 'ai', 'ai_context']:
                 output.__dict__[key] = value
+        self.location.add_thing(output)
         for key, value in self.properties.items():
             output.properties[key] = value.clone(output)
         return output
@@ -205,6 +206,12 @@ class Thing(object):
             if prop.key() not in self.properties.keys():
                 self.properties[prop.key()] = prop
                 prop.thing = self
+
+    def remove_properties_of_types(self, types):
+        self.properties = dict([
+            (key, value) for (key, value) in self.properties.items()
+            if not set(value.types).intersection(types)
+        ])
 
     def get_properties_of_types(self, types):
         return [
