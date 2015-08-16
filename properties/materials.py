@@ -25,7 +25,7 @@ class Wood(Material):
 
 class Flesh(Material):
     name = 'flesh'
-    properties = [p.Flammable, p.Phlogiston, p.Soft, p.Digestible, p.Decomposable]
+    properties = [p.Flammable, p.Phlogiston, p.Soft, p.Decomposable]
     hp = 3
     damage_mod = 1
 

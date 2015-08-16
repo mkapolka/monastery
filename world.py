@@ -32,8 +32,18 @@ places = {
     },
     "forest_outside_monastery": {
         "name": "along the bright trail",
-        "exits": ["monastery_garden", "forest_creekbed"],
+        "exits": ["monastery_garden", "forest_creekbed", "forest_trees"],
         "things": []
+    },
+    "forest_trees": {
+        "name": "among the trees",
+        "exits": ["forest_outside_monastery", "forest_clearing"],
+        "things": [t.Thistle, t.CustomTemplate(t.Sapling, name='a willow sapling', properties_append=[p.HealsWounds])]
+    },
+    "forest_clearing": {
+        "name": "in a clearing",
+        "exits": ["forest_trees"],
+        "things": [t.WillowRoot, st.RabbitHole]
     },
     "forest_creekbed": {
         "name": "a dry creekbed",

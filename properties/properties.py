@@ -46,11 +46,6 @@ class Dissolvable(Property):
     description = 'can be dissolved into water'
 
 
-class Digestible(Property):
-    types = ['physical']
-    description = 'can be digested'
-
-
 class Edible(Property):
     types = ['physical']
     description = 'is edible'

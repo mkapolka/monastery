@@ -43,3 +43,12 @@ class SpawnsFrogs(Spawner):
     max_things = 2
 
     spawn_message = 'a tadpole grows up into a frog.'
+
+
+class SpawnsRabbits(Spawner):
+    types = ['mechanical']
+    description = 'spawns rabbits'
+    template = t.Rabbit
+    max_things = 1
+
+    spawn_message = '%(thing)s crawls out of %(me)s'

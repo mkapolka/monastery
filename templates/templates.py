@@ -202,11 +202,26 @@ class Player(Template):
     material = m.Flesh
 
 
+class Rabbit(Template):
+    name = 'a rabbit'
+    form = f.Creature
+    material = m.Flesh
+    ai = 'mouse_ai'
+    size = Size.teapot
+
+
 class ShrinkyMushroom(Template):
     name = "spiteful fungi"
-    properties = [ShrinkOnEat, Edible, p.Digestible]
+    properties = [ShrinkOnEat, Edible]
     material = m.Plant
     size = Size.apple
+
+
+class Sapling(Template):
+    name = 'a sapling'
+    material = m.Wood
+    size = Size.child
+    properties = [p.Immobile, p.Pinchable]
 
 
 class Sponge(Template):
@@ -253,7 +268,7 @@ class Thistle(Template):
 class Water(Template):
     name = "some water"
     size = Size.small
-    properties = [p.Liquid, p.Boilable, p.Digestible]
+    properties = [p.Liquid, p.Boilable]
 
 
 class Well(Template):
@@ -271,7 +286,7 @@ class Well(Template):
 class WillowRoot(Template):
     name = "a knotted willow root"
     size = Size.apple
-    properties = [p.HealsWounds, p.Digestible]
+    properties = [p.HealsWounds]
     material = m.Wood
 
 

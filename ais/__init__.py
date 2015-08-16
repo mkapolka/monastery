@@ -232,7 +232,6 @@ class Nibble(DoOnceNode):
             self.thing.broadcast("%s nibbles on %s" % (self.thing.name, nibble_target.name))
             bolus = instantiate_template(t.Bolus, self.thing.get_property(lp.HasStomach))
             bolus.name = 'a %s bolus' % nibble_target.material.name
-            bolus.become(p.Digestible)
             for key, prop in nibble_target.properties.items():
                 bolus.properties[key] = prop.clone(bolus)
             return DoOnceNode.Completed
