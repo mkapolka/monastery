@@ -116,7 +116,7 @@ class Eat(DoOnceNode):
             return AIState.Fail
 
         # Check for things already in belly
-        okay = any(t for t in self.thing.get_property(lp.HasStomach).get_all_things() if self.filter_func(t))
+        okay = any(t for t in self.thing.get_property(lp.HasStomach).get_all_things() if self.filter_func(self.context, t))
         if okay:
             return AIState.Done
 
@@ -458,6 +458,14 @@ class Hunt(AliasNode):
                                      (Search, lambda ctx: any([t for t in ctx.thing.location.things if ffunc(ctx, t)])))
 
 
+class Poisoned(AliasNode):
+    alias = (Test, lambda ctx: ctx.thing.is_property(p.Poisoned))
+
+
+class SearchForThing(AliasNode):
+    alias = lambda f: (Search, lambda ctx: any(f(ctx, t) for t in get_accessible_things(ctx.thing)))
+
+
 def is_tasty_to_cat(ctx, thing):
     return thing.material == m.Flesh and thing.size < ctx.thing.size
 
@@ -474,11 +482,14 @@ mouse_ai = (Random, (Meander,),
                                (Sleep,)),
                     (WanderUntilCan, (Nibble, lambda ctx, t: t.material == m.Plant)))
 
-wolf_ai = (Random, (Sequence, (Meander,), (Meander,), (Meander,)),
-                   (Sequence, (Go, lambda ctx: ctx.home),
-                              (Sleep,)),
-                   (Sequence, (Hunt, is_tasty_to_cat),
-                              (Eat, is_tasty_to_cat)))
+wolf_ai = (Selector, (Sequence, (Poisoned,),
+                                (SearchForThing, lambda ctx, thing: thing.is_property(p.Antidote)),
+                                (Nibble, lambda ctx, t: t.is_property(p.Antidote))),
+                     (Random, (Sequence, (Meander,), (Meander,), (Meander,)),
+                              (Sequence, (Go, lambda ctx: ctx.home),
+                                         (Sleep,)),
+                              (Sequence, (Hunt, is_tasty_to_cat),
+                                         (Eat, is_tasty_to_cat))))
 
 
 def location_contains_liquid(context):
