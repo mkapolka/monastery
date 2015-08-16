@@ -10,6 +10,7 @@ from utils import sentence
 from templates import instantiate_template
 import properties as p
 import properties.spawner as sp
+import properties.location_properties as lp
 
 
 class AlightWhenBurned(Reaction):
@@ -233,6 +234,25 @@ class SpawnThings(Reaction):
             created = instantiate_template(prop.template, event.target.location)
             prop.spawned_things.append(created)
             event.target.broadcast(prop.spawn_message % {'thing': created.name, 'me': event.target.name})
+
+
+class SpringLiquid(Reaction):
+    predicates = [sp.SpringsWater]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        if event.target.is_property(lp.IsContainer):
+            location = event.target.get_property(lp.IsContainer).locations.values()[0]
+        else:
+            location = event.target.location
+        prop = event.target.get_property(sp.SpringsWater)
+        # Check for existing liquids
+        if not any(t for t in location.things if t.is_property(p.Liquid) and t.size >= location.size):
+            thing = instantiate_template(prop.template, location)
+            thing.size = location.size
+            event.target.broadcast("%s fills up with %s" % (event.target.name, thing.name))
+            event.target.tell("You fill up with %s" % thing.name)
 
 
 class MergeLiquids(Reaction):

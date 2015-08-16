@@ -5,12 +5,11 @@ from action import Action
 from enums import Size
 from location import PropertyLocation
 from properties import Immobile, HasStomach, Edible, MortarShaped, Dissolvable, Openable, Open, Liquid
-from properties.location_properties import get_accessible_things, get_all_locations, entrances_to_thing, get_all_contents
+from properties.location_properties import get_accessible_things, entrances_to_thing, get_all_contents
 from utils import letter_prompt, flatten_array
 import properties as p
 import properties.location_properties as lp
 from reaction import enqueue_event, Event
-import templates as t
 
 
 def choose_target(performer, prompt, filter_func=None, ignore=None):
@@ -34,6 +33,7 @@ class CantMoveReason(object):
     CantContain = 3
     CantHold = 4
     CantAccess = 5
+    CantDip = 6
 
 
 def _liquid_holdable(holder, thing):
@@ -69,7 +69,7 @@ def move_thing(mover, thing, entrance):
             CantMoveReason.CantHold: "You can't hold %s" % (thing.name),
             CantMoveReason.TooBig: '%s is too big to fit %s' % (thing.name, entrance.to_location.name),
             CantMoveReason.CantTraverse: "%s can't go %s" % (thing.name, entrance.description),
-            CantMoveReason.CantAccess: "%s can't access %s" % (mover.name, entrance.description),
+            CantMoveReason.CantAccess: "You can't access %s" % (entrance.description),
             CantMoveReason.CantContain: "%s can't fit in %s" % (thing.name, entrance.to_location.name),
         }[cant_move_reason])
     else:
@@ -303,29 +303,3 @@ class SopWringAction(Action):
                     thing.get_property(lp.IsContainer).add_thing(choice)
                 else:
                     sopper.tell("You can't sop that up!")
-
-
-class WellAction(Action):
-    prereq = p.SpringsWater
-
-    @classmethod
-    def describe(cls, thing):
-        return 'Fetch water from %s' % thing.name
-
-    @classmethod
-    def can_perform(cls, thing, actor):
-        return True
-
-    @classmethod
-    def perform(cls, thing, opener):
-        container = choose_target(opener, 'Fill what?', ignore=[thing])
-        if container:
-            if not can_hold(opener, container):
-                opener.tell("You can't hold %s" % container.name)
-            elif not any(map(lambda x: x.can_access(opener), entrances_to_thing(container))):
-                opener.tell("%s can't hold liquids..." % container.name)
-            else:
-                location = get_all_locations(container)[0]
-                water = t.instantiate_template(t.Water, location)
-                water.size = location.size
-                opener.tell("You fill %s with water." % container.name)

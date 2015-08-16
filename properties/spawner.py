@@ -52,3 +52,9 @@ class SpawnsRabbits(Spawner):
     max_things = 1
 
     spawn_message = '%(thing)s crawls out of %(me)s'
+
+
+class SpringsWater(Property):
+    types = []
+    description = 'produces water'
+    template = t.Water

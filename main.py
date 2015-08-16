@@ -47,20 +47,6 @@ def action_prompt_v1():
         action.perform(thing, player)
 
 
-def doable_actions_for_thing(thing):
-    return filter(lambda a: a.can_perform(thing, player), actions_for_thing(thing))
-
-
-def action_prompt_v2():
-    things = [t for t in get_accessible_things(player) if doable_actions_for_thing(t)]
-    which_thing = letter_prompt(things, "Use what?", describe_action_to_player)
-    if which_thing:
-        actions = [a for a in actions_for_thing(which_thing) if a.can_perform(which_thing, player)]
-        which_action = letter_prompt(actions, "Do what?", lambda x: x.describe(which_thing))
-        if which_action:
-            which_action.perform(which_thing, player)
-
-
 def move_prompt():
     things = [t for t in get_accessible_things(player)]
     thing_to_move = letter_prompt(things, 'Move what?', describe_thing_to_player)

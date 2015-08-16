@@ -220,8 +220,8 @@ class ShrinkyMushroom(Template):
 class Sapling(Template):
     name = 'a sapling'
     material = m.Wood
+    form = f.Shrub
     size = Size.child
-    properties = [p.Immobile, p.Pinchable]
 
 
 class Sponge(Template):
@@ -260,7 +260,8 @@ class Table(Template):
 
 class Thistle(Template):
     name = 'a milk thistle bush'
-    properties = [p.Antidote, p.Immobile, p.Pinchable, p.Edible]
+    properties = [p.Antidote, p.Edible]
+    form = f.Shrub
     material = m.Plant
     size = Size.medium
 
@@ -271,16 +272,11 @@ class Water(Template):
     properties = [p.Liquid, p.Boilable]
 
 
-class Well(Template):
-    name = "a well"
-    size = Size.medium
-    properties = [p.SpringsWater, p.IsContainer, p.Open]
-    material = m.Stone
-    contents = {
-        IsContainer: [
-            Water
-        ]
-    }
+class WineSkin(Template):
+    name = 'a wine skin'
+    properties = [lp.IsContainer]
+    size = Size.cat
+    material = m.Leather
 
 
 class WillowRoot(Template):

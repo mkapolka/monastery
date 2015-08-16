@@ -5,3 +5,7 @@ import location_properties as lp
 
 class Creature(Form):
     properties = [lp.HasStomach, p.Breathes]
+
+
+class Shrub(Form):
+    properties = [p.Pinchable, p.Immobile]

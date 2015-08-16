@@ -145,10 +145,5 @@ class ShrinkOnEat(Property):
     description = 'will shrink the ingester'
 
 
-class SpringsWater(Property):
-    types = []
-    description = 'produces water'
-
-
 class TeapotShaped(Property):
     types = ['mechanical']

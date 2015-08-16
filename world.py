@@ -13,7 +13,7 @@ places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
         "exits": ["monastery_kitchen", "forest_outside_monastery"],
-        "things": [Cat, t.Well, st.MouseHole]
+        "things": [Cat, st.Well, st.MouseHole, t.WineSkin]
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
@@ -64,7 +64,6 @@ places = {
         "name": "the wolves' den",
         "exits": ["forest_thicket"],
         "things": [t.CustomTemplate(t.Wolf, name='a white wolf'),
-                   t.CustomTemplate(t.Wolf, name='a grey wolf'),
                    t.CustomTemplate(t.Wolf, name='a black wolf')]
     }
 }
