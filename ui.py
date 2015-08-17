@@ -1,3 +1,4 @@
+import datetime
 import os
 
 import curses
@@ -12,6 +13,8 @@ room_scr = None
 
 
 input_prompt = "[g]o [d]o [l]ook [e]xamine [w]ait [i]nventory [m]ove [t]ake"
+
+outfile = open('log_%s' % str(datetime.datetime.now()).replace(' ', '_'), 'w')
 
 
 def init(scr):
@@ -90,6 +93,8 @@ def message(message):
     height, width = message_scr.getmaxyx()
     message_scr.move(height - 1, 0)
     message_scr.addstr(str(message))
+    outfile.write(message + '\n')
+    outfile.flush()
 
 
 def get_char(scr=None):

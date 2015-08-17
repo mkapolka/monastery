@@ -1,4 +1,3 @@
-import math
 import random
 
 from action import Action
@@ -190,16 +189,12 @@ class GrindWithPestleAction(Action):
 
             if choice.size <= thing.size:
                 # Grind it
-                damage = math.pow(thing.size, 2)
-                choice.attack(damage, 'grind')
-                grinder.tell("You grind %s for %d points of damage" % (choice.name, damage))
-                if choice.health_percentage < .25:
-                    grinder.tell("You grind %s into a powder." % choice.name)
-                    for prop in choice.get_properties_of_types(['mechanical']):
-                        choice.unbecome(prop.__class__, force=True)
-                    # Powder properties TODO: abstract these somewhere?
-                    choice.become(Dissolvable)
-                    choice.name = 'some powdered %s' % choice.name
+                grinder.tell("You grind %s into a powder." % choice.name)
+                for prop in choice.get_properties_of_types(['mechanical']):
+                    choice.unbecome(prop.__class__, force=True)
+                # Powder properties TODO: abstract these somewhere?
+                choice.become(Dissolvable)
+                choice.name = 'some powdered %s' % choice.name
 
 
 class OpenCloseAction(Action):
@@ -288,7 +283,7 @@ class SlatherAction(Action):
                 slatherer.tell("You can't slather that!")
             else:
                 slatherer.tell("You slather %s with %s" % (target.name, thing.name))
-                target.transfer_properties(thing, thing.get_properties_of_types(['physical', 'chemical']), clone=True)
+                target.transfer_properties(thing, thing.get_properties_of_types(['chemical']), clone=True)
                 thing.size -= target.size
                 if thing.size <= 0:
                     slatherer.tell("You use up the rest of %s." % thing.name)

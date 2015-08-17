@@ -22,7 +22,7 @@ places = {
     },
     "monastery_guest_house": {
         "name": "the guest house",
-        "exits": ["monastery_kitchen"],
+        "exits": ["monastery_garden"],
         "things": [t.ShrinkyMushroom, Mortar, t.NeedleAndThread]
     },
     "monastery_closet": {
@@ -92,9 +92,12 @@ def make_locations(places):
 
 
 def _recurse_thing_locations(thing):
-    return itertools.chain(*[
-        _recurse_location(l) for l in thing.locations
-    ])
+    try:
+        return itertools.chain(*[
+            _recurse_location(l) for l in thing.locations
+        ])
+    except RuntimeError:
+        raise Exception(thing)
 
 
 def _recurse_location(location):

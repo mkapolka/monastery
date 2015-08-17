@@ -153,6 +153,11 @@ class LocationProperty(Property):
         for thing in self.get_all_things():
             self.thing.location.add_thing(thing)
 
+    def clone(self, new_thing=None):
+        output = self.__class__(new_thing or self.thing)
+        output.count = self.count
+        return output
+
 
 class IsContainer(LocationProperty):
     types = ['mechanical']
