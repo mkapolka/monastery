@@ -32,7 +32,7 @@ places = {
     },
     "forest_outside_monastery": {
         "name": "along the bright trail",
-        "exits": ["monastery_garden", "forest_creekbed", "forest_trees"],
+        "exits": ["monastery_garden", "forest_creekbed", "forest_trees", "forest_bridge"],
         "things": []
     },
     "forest_trees": {
@@ -47,7 +47,7 @@ places = {
     },
     "forest_creekbed": {
         "name": "a dry creekbed",
-        "exits": ["forest_outside_monastery", "forest_thicket"],
+        "exits": ["forest_outside_monastery", "forest_thicket", "forest_under_bridge"],
         "things": [t.WillowRoot]
     },
     "forest_thicket": {
@@ -65,6 +65,15 @@ places = {
         "exits": ["forest_thicket"],
         "things": [t.CustomTemplate(t.Wolf, name='a white wolf'),
                    t.CustomTemplate(t.Wolf, name='a black wolf')]
+    },
+    "forest_under_bridge": {
+        "name": "under the bridge",
+        "exits": ["forest_creekbed", "forest_bridge"],
+        "things": [t.Troll]
+    },
+    "forest_bridge": {
+        "name": "on the bridge",
+        "exits": ["forest_outside_monastery", "forest_under_bridge"]
     }
 }
 

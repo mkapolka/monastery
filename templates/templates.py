@@ -272,6 +272,15 @@ class Thistle(Template):
     size = Size.medium
 
 
+class Troll(Template):
+    name = 'a hideous troll'
+    size = Size.armoire
+    damage = 10
+    form = f.Creature
+    material = m.Flesh
+    ai = 'troll_ai'
+
+
 class Water(Template):
     name = "some water"
     size = Size.small

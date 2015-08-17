@@ -2,6 +2,7 @@ import random
 
 from ai import AINode, AIState, AliasNode
 from actions import attack, walk_thing
+from enums import Size
 from location import get_path, locations_within
 from properties.location_properties import get_accessible_things
 from templates import instantiate_template
@@ -73,16 +74,18 @@ class AddNearbyTargets(AINode):
 class AttackTargets(AINode):
     def tick(self):
         target = None
+        accessible_things = get_accessible_things(self.thing)
         if self.context.focus_target:
             target = self.context.focus_target
         else:
-            accessible_things = get_accessible_things(self.thing)
             accessible_targets = [
                 t for t in self.context.targets if t in accessible_things
             ]
             if accessible_targets:
                 target = accessible_targets[0]
         if target:
+            if target not in accessible_things:
+                return AIState.Fail
             if not target.alive:
                 return AIState.Done
             attack(self.thing, target)
@@ -213,7 +216,8 @@ class Message(DoOnceNode):
 
     def get_parameters(self):
         return {
-            'thing': self.thing.name
+            'thing': self.thing.name,
+            'focus_target': self.context.focus_target.name if self.context.focus_target else 'nothing'
         }
 
 
@@ -396,6 +400,7 @@ class WithFocus(AINode):
 
     def begin(self):
         self.focus_target = None
+        self.subnode.begin()
 
     def tick(self):
         if not self.focus_target:
@@ -499,3 +504,15 @@ def location_contains_liquid(context):
 frog_ai = (Sequence, (Search, location_contains_liquid),
                      (Random, (Sleep,),
                               (Gas,)))
+
+
+def hated_by_troll(thing):
+    return thing.size > Size.cat and thing.alive
+
+
+troll_ai = (Random, (Sequence, (Test, lambda ctx: any(t for t in ctx.thing.location.things if hated_by_troll(t) and t != ctx.thing)),
+                               (WithFocus, lambda ctx, options: next((t for t in options if hated_by_troll(t) and t != ctx.thing), None),
+                                   (Sequence,
+                                       (Message, "%(thing)s glowers at %(focus_target)s and roars!"),
+                                       (Wait, 1),
+                                       (AttackTargets,)))))
