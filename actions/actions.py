@@ -103,6 +103,22 @@ def attack(attacker, target, weapon=None):
     enqueue_event(Event(attack_type, target, attacker=attacker, weapon=weapon, damage=damage))
 
 
+class BurnAction(Action):
+    prereq = p.Burning
+
+    @classmethod
+    def describe(cls, thing):
+        return "Burn something with %s" % thing.name
+
+    @classmethod
+    def perform(cls, thing, burner):
+        target = choose_target(burner, "Burn what?", ignore=[thing])
+        if target:
+            damage = thing.size
+            target.attack(damage, 'burn', burner)
+            enqueue_event(Event('burn', target))
+
+
 class CutAction(Action):
     prereq = p.Bladed
 

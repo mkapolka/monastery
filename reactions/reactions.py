@@ -40,6 +40,29 @@ class AlightWhenHot(Reaction):
             burst_info_flames(event.target)
 
 
+class Burn(Reaction):
+    predicates = [p.Burning, p.Flammable]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        damage = event.target.size * 4
+        event.target.tell("The fire burns you for %s damage!" % damage)
+        event.target.broadcast("The fire burns %s for %s damage!" % (event.target.name, damage))
+        event.target.attack(damage, 'burn')
+        enqueue_event(Event('burn', event.target))
+
+        if event.target.hp <= 0:
+            event.target.broadcast("%s is burnt to ashes" % event.target.name)
+            event.target.tell("You're burnt to a crisp!")
+            destroy_thing(event.target)
+
+        # Burn nearby things
+        neighbors = [t for t in event.target.location.things if t != event.target if are_touching(event.target, t)]
+        for neighbor in neighbors:
+            event.target.broadcast("%s burns %s" % (event.target.name, neighbor.name))
+
+
 class BoilBoilable(Reaction):
     predicates = [p.Boilable, Hot, p.Liquid]
     anti_predicates = [Boiling]
@@ -78,17 +101,6 @@ class Breathe(Reaction):
         if gassy_things:
             for thing in gassy_things:
                 enqueue_event(Event("ingest", thing, ingester=event.target))
-
-
-class BurnNearby(Reaction):
-    predicates = [p.Burning]
-    event = "tick"
-
-    @classmethod
-    def perform(cls, event):
-        neighbors = [t for t in event.target.location.things if t != event.target if are_touching(event.target, t)]
-        for neighbor in neighbors:
-            event.target.broadcast("%s burns %s" % (event.target.name, neighbor.name))
 
 
 class CutOpen(Reaction):
@@ -170,6 +182,7 @@ class HeatContents(Reaction):
         for thing in get_all_contents(event.target):
             if not thing.is_property(Hot):
                 thing.broadcast("%s heats up." % thing.name)
+                thing.tell("You heat up")
                 thing.become(Hot)
 
 
