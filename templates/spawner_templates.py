@@ -28,6 +28,6 @@ class Well(Template):
     material = m.Stone
     contents = {
         lp.IsContainer: [
-            t.Water
+            t.CustomTemplate(t.Water, size=Size.medium)
         ]
     }

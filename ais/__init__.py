@@ -292,7 +292,7 @@ class Search(AINode):
 
     def begin(self):
         self.searched_rooms = []
-        self.rooms_to_search = locations_within(self.thing.location, self.max_distance, self.thing)
+        self.rooms_to_search = filter(lambda l: not l.is_dangerous(self.thing), locations_within(self.thing.location, self.max_distance, self.thing))
         self.next_room = pick_random(self.rooms_to_search)
 
     def tick(self):
@@ -377,7 +377,7 @@ class Wander(AINode):
         if self.has_wandered:
             return AIState.Done
 
-        entrances = [e for e in self.thing.location.get_all_exits() if e.can_traverse(self.thing)]
+        entrances = [e for e in self.thing.location.get_all_exits() if e.can_traverse(self.thing) and not e.to_location.is_dangerous(self.thing)]
         if entrances:
             entrance = entrances[random.randint(0, len(entrances) - 1)]
             walk_thing(self.thing, entrance)
