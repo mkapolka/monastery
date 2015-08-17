@@ -92,6 +92,9 @@ class Location(object):
     def name(self, value):
         self._name = value
 
+    def is_dangerous(self, querier):
+        return False
+
 
 class PropertyLocation(Location):
     """ For locations implanted within properties """
@@ -121,6 +124,9 @@ class PropertyLocation(Location):
             'thing_name': self.thing.name,
             'prop': self.prop
         }
+
+    def is_dangerous(self, querier):
+        return self.thing.get_properties_of_types(['dangerous'])
 
 
 class Exit(object):

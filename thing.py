@@ -194,17 +194,18 @@ class Thing(object):
             if prop.count == 0:
                 self.__remove_property(prop)
 
-    def transfer_properties(self, from_thing, properties):
+    def transfer_properties(self, from_thing, properties, clone=False):
         """ Transfers the properties into this thing. For i.e. when a powder dissolves into a liquid """
-        # Remove the properties from the old object
-        from_thing.properties = dict([
-            (k, v) for k, v in from_thing.properties.items()
-            if v not in properties
-        ])
+        if not clone:
+            # Remove the properties from the old object
+            from_thing.properties = dict([
+                (k, v) for k, v in from_thing.properties.items()
+                if v not in properties
+            ])
 
         for prop in properties:
             if prop.key() not in self.properties.keys():
-                self.properties[prop.key()] = prop
+                self.properties[prop.key()] = prop if not clone else prop.clone()
                 prop.thing = self
 
     def remove_properties_of_types(self, types):

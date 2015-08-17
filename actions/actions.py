@@ -10,6 +10,7 @@ from utils import letter_prompt, flatten_array
 import properties as p
 import properties.location_properties as lp
 from reaction import enqueue_event, Event
+from thing import destroy_thing
 
 
 def choose_target(performer, prompt, filter_func=None, ignore=None):
@@ -267,6 +268,31 @@ class SewAction(Action):
             else:
                 performer.tell("You sew %s shut." % target.name)
                 target.unbecome(Open)
+
+
+class SlatherAction(Action):
+    prereq = p.Slatherable
+
+    @classmethod
+    def describe(cls, thing):
+        return 'Slather something with %s' % thing.name
+
+    @classmethod
+    def perform(cls, thing, slatherer):
+        target = choose_target(slatherer, 'Slather what?', ignore=[thing])
+        if target:
+            # Check size
+            if target.size > thing.size:
+                slatherer.tell("You don't have enough %s to slather %s" % (thing.name, target.name))
+            elif target.is_property(p.Liquid) or target.is_property(p.Gas):
+                slatherer.tell("You can't slather that!")
+            else:
+                slatherer.tell("You slather %s with %s" % (target.name, thing.name))
+                target.transfer_properties(thing, thing.get_properties_of_types(['physical', 'chemical']), clone=True)
+                thing.size -= target.size
+                if thing.size <= 0:
+                    slatherer.tell("You use up the rest of %s." % thing.name)
+                    destroy_thing(thing)
 
 
 class SopWringAction(Action):

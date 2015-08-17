@@ -6,8 +6,8 @@ class Action(object):
         return "Do something?"
 
     @classmethod
-    def can_perform(self, performer):
-        return False
+    def can_perform(self, thing, performer):
+        return True
 
     @classmethod
     def perform(self, *args, **kwargs):

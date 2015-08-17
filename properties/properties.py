@@ -135,6 +135,11 @@ class Sews(Property):
     description = 'can be used to sew things'
 
 
+class Slatherable(Property):
+    types = ['mechanical']
+    description = 'can be slathered onto things'
+
+
 class Soft(Property):
     types = ['physical']
     description = 'is soft'
@@ -143,6 +148,11 @@ class Soft(Property):
 class ShrinkOnEat(Property):
     types = ['chemical']
     description = 'will shrink the ingester'
+
+
+class Thickens(Property):
+    types = ['chemical']
+    description = 'acts as a thickening agent'
 
 
 class TeapotShaped(Property):

@@ -212,7 +212,8 @@ class HasStomach(LocationProperty):
             'exits': [
                 {
                     'to': 'outside',
-                    'description': "Through %(thing)s's esophagus"
+                    'description': "Through %(thing)s's torso",
+                    'requires': [Open]
                 }
             ],
         }

@@ -13,9 +13,7 @@ class Property(object):
     def key(cls):
         return str(cls)
 
-    def clone(self, new_thing):
-        output = self.__class__(new_thing)
-        output.description = self.description
-        output.types = self.types
-        output.count = self.count
+    def clone(self, new_thing=None):
+        output = self.__class__(new_thing or self.thing)
+        output.__dict__ = dict(self.__dict__)
         return output

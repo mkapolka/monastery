@@ -130,6 +130,12 @@ class Bucket(Template):
     }
 
 
+class Butter(Template):
+    name = 'some butter'
+    properties = [p.Slatherable, p.Edible]
+    size = Size.apple
+
+
 class Cat(Template):
     name = "A dozy cat"
     form = f.Creature

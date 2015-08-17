@@ -13,7 +13,7 @@ from world import World
 import ui
 
 world = World()
-player = instantiate_template(Player, world.locations['forest_thicket'])
+player = instantiate_template(Player, world.locations['monastery_garden'])
 player.is_player = True
 
 
@@ -58,7 +58,7 @@ def move_prompt():
         good_places = [t for t in player.location.things if t not in [thing_to_move]]
         for thing2 in good_places:
             for entrance in entrances_to_thing(thing2):
-                if entrance.to_location != thing_to_move.location and entrance.to_location != inventory_location(player):
+                if entrance.to_location != thing_to_move.location and entrance.to_location != inventory_location(player) and (entrance.can_access(player) or entrance.can_view(player)):
                     places.append(entrance)
         if thing_to_move.location != player.location:
             places.append('ground')

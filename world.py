@@ -12,16 +12,16 @@ from utils import flatten_array
 places = {
     "monastery_garden": {
         "name": "The Monastery Garden",
-        "exits": ["monastery_kitchen", "forest_outside_monastery"],
+        "exits": ["monastery_kitchen", "monastery_guest_house", "forest_outside_monastery"],
         "things": [Cat, st.Well, st.MouseHole, t.WineSkin]
     },
     "monastery_kitchen": {
         "name": "Brother Buddy's Kitchen",
-        "exits": ["monastery_garden", "monastery_solar", "monastery_closet"],
-        "things": [Oven, t.TeaKettle, Barrel, t.Knife]
+        "exits": ["monastery_garden", "monastery_closet"],
+        "things": [Oven, t.TeaKettle, Barrel, t.Knife, t.Butter]
     },
-    "monastery_solar": {
-        "name": "the solar",
+    "monastery_guest_house": {
+        "name": "the guest house",
         "exits": ["monastery_kitchen"],
         "things": [t.ShrinkyMushroom, Mortar, t.NeedleAndThread]
     },
@@ -43,7 +43,7 @@ places = {
     "forest_clearing": {
         "name": "in a clearing",
         "exits": ["forest_trees"],
-        "things": [t.WillowRoot, st.RabbitHole]
+        "things": [t.WillowRoot, st.RabbitHole, t.CustomTemplate(t.Sapling, name='a marshmallow bush', properties_append=[p.Thickens])]
     },
     "forest_creekbed": {
         "name": "a dry creekbed",
