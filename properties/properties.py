@@ -76,6 +76,11 @@ class HealsWounds(Property):
     description = 'heals wounds'
 
 
+class HeatsContents(Property):
+    types = ['mechanical']
+    description = 'heats its contents'
+
+
 class Hot(Property):
     types = []
     description = 'is hot'

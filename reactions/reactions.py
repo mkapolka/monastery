@@ -3,7 +3,7 @@ import random
 
 from enums import Size
 from properties.location_properties import HasStomach, get_all_contents, are_touching
-from properties.properties import Flammable, Burning, ShrinkOnEat, TeapotShaped, Boiling, Hot
+from properties.properties import Flammable, ShrinkOnEat, TeapotShaped, Boiling, Hot
 from reaction import Reaction, enqueue_event, Event
 from thing import destroy_thing, calc_hp
 from utils import sentence
@@ -13,13 +13,31 @@ import properties.spawner as sp
 import properties.location_properties as lp
 
 
+def burst_info_flames(thing):
+    thing.broadcast("%s bursts into flames!" % thing.name)
+    thing.tell("You burst into flames!")
+    thing.become(p.Burning)
+
+
 class AlightWhenBurned(Reaction):
-    predicates = [Flammable]
+    predicates = [p.Flammable]
+    anti_predicates = [p.Burning]
     event = "burn"
 
     @classmethod
     def perform(cls, event):
-        event.target.become(Burning)
+        burst_info_flames(event.target)
+
+
+class AlightWhenHot(Reaction):
+    predicates = [p.Hot, Flammable]
+    anti_predicates = [p.Burning]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        if random.random() < .25:
+            burst_info_flames(event.target)
 
 
 class BoilBoilable(Reaction):
@@ -63,12 +81,12 @@ class Breathe(Reaction):
 
 
 class BurnNearby(Reaction):
-    predicates = [Burning]
+    predicates = [p.Burning]
     event = "tick"
 
     @classmethod
     def perform(cls, event):
-        neighbors = [t for t in event.target.location.things if t != event.target]
+        neighbors = [t for t in event.target.location.things if t != event.target if are_touching(event.target, t)]
         for neighbor in neighbors:
             event.target.broadcast("%s burns %s" % (event.target.name, neighbor.name))
 
@@ -84,6 +102,18 @@ class CutOpen(Reaction):
             thing.become(p.Open, custom_description='has been slashed open')
             thing.unbecome(p.Openable)
             event.attacker.tell("You slash open %s!" % thing.name)
+
+
+class CoolDown(Reaction):
+    predicates = [p.Hot]
+    anti_predicates = [p.HeatsContents]
+    event = "tick"
+
+    @classmethod
+    def perform(cls, event):
+        if random.random() < .1:
+            event.target.unbecome(p.Hot)
+            event.target.tell_room("%s cools down." % event.target.name)
 
 
 class DigestContents(Reaction):
@@ -132,7 +162,7 @@ class DissolveIntoLiquid(Reaction):
 
 
 class HeatContents(Reaction):
-    predicates = [Hot]
+    predicates = [p.HeatsContents]
     event = "tick"
 
     @classmethod

@@ -196,7 +196,7 @@ class NeedleAndThread(Template):
 
 class Oven(Template):
     name = "An oven"
-    properties = [IsContainer, Hot, p.Open, p.Immobile]
+    properties = [IsContainer, Hot, p.HeatsContents, p.Open, p.Immobile]
     material = m.Metal
     size = Size.child
 
